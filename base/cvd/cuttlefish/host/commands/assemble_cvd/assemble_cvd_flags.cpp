@@ -422,10 +422,13 @@ DEFINE_vec(enable_wifi, fmt::format("{}", CF_DEFAULTS_ENABLE_WIFI),
 DEFINE_vec(device_external_network, CF_DEFAULTS_DEVICE_EXTERNAL_NETWORK,
            "The mechanism to connect to the public internet.");
 
-// disable wifi, disable sandbox, use guest_swiftshader
+// Validate snapshot-compatible flags (enable_virtiofs=false, enable_usb=false,
+// gpu_mode=guest_swiftshader) for single-instance Crosvm.
 DEFINE_bool(snapshot_compatible, false,
-            "Declaring that device is snapshot'able and runs with only "
-            "supported ones.");
+            "Verify that the single-instance Crosvm configuration is "
+            "compatible with snapshot operations (requires "
+            "--enable_virtiofs=false, --enable_usb=false, and "
+            "--gpu_mode=guest_swiftshader).");
 
 DEFINE_string(straced_host_executables, CF_DEFAULTS_STRACED_HOST_EXECUTABLES,
               "Comma-separated list of executable names to run under strace "
