@@ -48,24 +48,56 @@ constexpr char kSummaryHelpText[] =
 constexpr char kDetailedHelpText[] =
     R"(Cuttlefish Virtual Device (CVD) CLI.
 
-Suspend/resume the cuttlefish device, or take snapshot of the device
+Suspend/resume a Cuttlefish instance group, or take a snapshot of it.
+All three commands operate on the entire selected instance group.
 
-usage: cvd [selector flags] suspend/resume/snapshot_take [--help]
+Usage:
+  cvd [selector flags] suspend [flags] [--help]
+  cvd [selector flags] resume [flags] [--help]
+  cvd [selector flags] snapshot_take --snapshot_path=<path> [flags] [--help]
 
-Common:
-  Selector Flags:
-    --group_name=<name>       The name of the instance group
-    --snapshot_path=<path>>   Directory that contains saved snapshot files
+Selector Flags:
+  --group_name=<name>         Name of the instance group
+  --instance_name=<name>      Instance name used to select its containing group
+                              (alias: --instance_names)
 
-Crosvm:
-  --snapshot_compat           Tells the device to be snapshot-compatible
-                              The device to be created is checked if it is
-                              compatible with snapshot operations
+Common Flags (suspend, resume, snapshot_take):
+  --wait_for_launcher=<secs>  Seconds to wait to connect to the launcher monitor
+                              (default: 30)
 
-QEMU:
-  No QEMU-specific arguments at the moment
+snapshot_take Flags:
+  --snapshot_path=<path>      Directory to save snapshot files (required; must
+                              not already exist unless --force is set)
+  --force                     Delete --snapshot_path first if it already exists
+  --auto_suspend              Suspend before and resume after taking snapshot
+  --[no]cleanup_snapshot_path Clean up --snapshot_path on failure
+                              (default: true)
 
-)";
+Crosvm Launch Flags (pass to `cvd create` / `cvd start`):
+  --snapshot_compatible       Validate at launch that single-instance Crosvm
+                              flags support snapshot/suspend/resume (does not
+                              set them automatically). Currently requires:
+    --enable_virtiofs=false   Disable virtio-fs (crosvm does not support
+                              virtio_sleep for virtio-fs)
+    --enable_usb=false        Disable USB passthrough
+    --gpu_mode=guest_swiftshader
+                              Use 2D guest SwiftShader rendering (3D GPU
+                              snapshot restore is not supported)
+
+VM Manager Support:
+  Only Crosvm is currently supported. QEMU is not supported for suspend,
+  resume, or snapshot_take.
+
+Examples:
+  # Launch a snapshot-compatible Crosvm device:
+  cvd create --snapshot_compatible --enable_virtiofs=false \
+    --enable_usb=false --gpu_mode=guest_swiftshader
+
+  # Take a snapshot (auto-suspending and resuming the running device):
+  cvd snapshot_take --auto_suspend --snapshot_path=/tmp/cf_snapshot
+
+  # Restore a stopped group from a snapshot:
+  cvd start --snapshot_path=/tmp/cf_snapshot)";
 
 Result<std::string> GetBin(const std::string& host_artifacts_path) {
   return CF_EXPECT(HostToolTarget(host_artifacts_path).GetSnapshotBinName());

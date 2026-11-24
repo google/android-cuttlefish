@@ -40,8 +40,7 @@ constexpr char cleanup_snapshot_path_help[] =
     "failure of snapshot-taking";
 
 constexpr char wait_for_launcher_help[] =
-    "How many seconds to wait for the launcher to respond to the status "
-    "command. A value of zero means wait indefinitely.";
+    "How many seconds to wait to connect to the launcher monitor.";
 
 constexpr char snapshot_path_help[] =
     "Path to the directory the taken snapshot files are saved";
