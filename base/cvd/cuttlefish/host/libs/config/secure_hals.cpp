@@ -51,6 +51,8 @@ NoDestructor<absl::flat_hash_map<absl::string_view, SecureHal>> kMapping([] {
       {"host_oemlock_secure", SecureHal::kHostOemlockSecure},
       {"host_secure_oemlock", SecureHal::kHostOemlockSecure},
       {"guest_strongbox_insecure", SecureHal::kGuestStrongboxInsecure},
+      {"guest_weaver_trusty_insecure", SecureHal::kGuestWeaverTrustyInsecure},
+      {"guest_weaver_insecure_trusty", SecureHal::kGuestWeaverTrustyInsecure},
       {"weaver", SecureHal::kHostWeaverSecure},
       {"host_weaver_secure", SecureHal::kHostWeaverSecure},
       {"host_secure_weaver", SecureHal::kHostWeaverSecure},
@@ -100,6 +102,10 @@ Result<void> ValidateSecureHals(const std::set<SecureHal>& secure_hals) {
                        secure_hals.count(SecureHal::kHostOemlockSecure);
   CF_EXPECT_LE(oemlock_impls, 1, "Choose at most one oemlock implementation");
 
+  auto weaver_impls = secure_hals.count(SecureHal::kGuestWeaverTrustyInsecure) +
+                      secure_hals.count(SecureHal::kHostWeaverSecure);
+  CF_EXPECT_LE(weaver_impls, 1, "Choose at most one weaver implementation");
+
   return {};
 }
 
@@ -129,6 +135,8 @@ std::string ToString(SecureHal hal_in) {
       return "host_oemlock_secure";
     case SecureHal::kGuestStrongboxInsecure:
       return "guest_strongbox_insecure";
+    case SecureHal::kGuestWeaverTrustyInsecure:
+      return "guest_weaver_trusty_insecure";
     case SecureHal::kHostWeaverSecure:
       return "host_weaver_secure";
   }
