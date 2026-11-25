@@ -56,8 +56,8 @@ pub struct CaptureCompletedEvent {
 pub enum ChannelCmd {
     /// Start capturing at the given resolution.
     StartCapture { width: u32, height: u32 },
-    /// Stop capturing and flush pending requests.
-    StopCapture,
+    /// Stop capturing, flush pending requests and signal stopped.
+    StopCapture { stopped: Sender<()> },
     /// Enqueue a capture request into the channel's request queue.
     Queue(CaptureRequest),
     /// Update the render parameters (e.g. pattern, gain).
@@ -262,9 +262,10 @@ impl CaptureProcessor {
                 self.iteration = 0;
                 self.clock.start();
             }
-            ChannelCmd::StopCapture => {
+            ChannelCmd::StopCapture { stopped } => {
                 self.streaming = false;
                 self.pending_requests.clear();
+                let _ = stopped.send(());
             }
             ChannelCmd::Queue(req) => {
                 self.pending_requests.push_back(req);
@@ -355,11 +356,13 @@ impl CaptureChannel {
         self.send_cmd(ChannelCmd::StartCapture { width, height })
     }
 
-    /// Stops capturing on this channel and flushes queued requests.
-    ///
-    /// TODO(b/537805477#comment8): Block until the render in progress is done.
+    /// Stops capturing on this channel and waits for the render in progress to finish.
     pub fn stop_capture(&self) -> AnyhowResult<()> {
-        self.send_cmd(ChannelCmd::StopCapture)
+        let (stopped, stopped_rx) = std::sync::mpsc::channel();
+        self.send_cmd(ChannelCmd::StopCapture { stopped })?;
+        stopped_rx
+            .recv_timeout(Duration::from_millis(100))
+            .context("Capture channel did not stop in time")
     }
 
     /// Queues a capture request for `buffer_id` into the capture channel.
