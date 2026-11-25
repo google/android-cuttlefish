@@ -17,7 +17,7 @@
 #include "cuttlefish/host/libs/image_aggregator/raw.h"
 
 #include <stdint.h>
-#include <sys/types.h>
+#include <sys/types.h>  // NOLINT(misc-include-cleaner)
 
 #include <string>
 #include <utility>
@@ -29,7 +29,7 @@
 namespace cuttlefish {
 
 Result<RawImage> RawImage::OpenExisting(const std::string& path) {
-  off_t size = FileSize(path);
+  off_t size = FileSize(path);  // NOLINT(misc-include-cleaner)
   CF_EXPECT_GE(size, 0, StrError());
 
   return RawImage(size);

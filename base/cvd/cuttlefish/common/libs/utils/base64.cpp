@@ -18,7 +18,7 @@
 
 #include <stddef.h>
 #include <stdint.h>
-#include <sys/types.h>
+#include <sys/types.h>  // NOLINT(misc-include-cleaner)
 
 #include <string>
 #include <vector>
@@ -37,7 +37,7 @@ Result<std::string> EncodeBase64(const void* data, size_t size) {
 
   std::string out;
   out.resize(max_length);
-  ssize_t enc_res =
+  ssize_t enc_res =  // NOLINT(misc-include-cleaner)
       EVP_EncodeBlock(reinterpret_cast<uint8_t*>(out.data()),
                       reinterpret_cast<const uint8_t*>(data), size);
   CF_EXPECT_GE(enc_res, 0);

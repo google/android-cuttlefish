@@ -163,6 +163,7 @@ SubprocessStopper KillSubprocessFallback(std::function<StopperResult()> nice) {
 }
 
 SubprocessStopper KillSubprocessFallback(SubprocessStopper nice_stopper) {
+  // NOLINTNEXTLINE(clang-analyzer-cplusplus.NewDeleteLeaks)
   return [nice_stopper](Subprocess* process) {
     auto nice_result = nice_stopper(process);
     if (nice_result == StopperResult::kFailure) {

@@ -18,7 +18,6 @@
 
 #if defined(__linux__)
 #include <sys/mman.h>
-#include <sys/types.h>
 #include <syscall.h>
 #include <unistd.h>
 #endif
@@ -125,7 +124,8 @@ gfxstream::expected<ScopedFd, std::string> CreateSharedMemory(
     return gfxstream::unexpected("Failed to create shared memory: " +
                                  std::string(strerror(errno)));
   }
-  if (ftruncate(fd, static_cast<off_t>(size))) {
+  if (ftruncate(fd,
+                static_cast<off_t>(size))) {  // NOLINT(misc-include-cleaner)
     const std::string error = std::string(strerror(errno));
     close(fd);
     return gfxstream::unexpected("Failed to resize shared memory: " + error);

@@ -134,7 +134,7 @@ Result<LocalInstanceGroup> LocalInstanceGroup::Builder::Build() {
 
   group_proto_.set_product_out_path(absl::StrJoin(product_out_paths, ","));
   return CF_EXPECT(LocalInstanceGroup::Create(group_proto_));
-}
+}  // NOLINT(clang-analyzer-cplusplus.NewDeleteLeaks)
 
 bool LocalInstanceGroup::HasActiveInstances() const {
   for (const auto& instance : instances_) {

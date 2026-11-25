@@ -20,7 +20,6 @@
 #include <stdlib.h>
 #include <sys/poll.h>
 #include <sys/socket.h>  // IWYU pragma: keep
-#include <sys/types.h>
 #include <unistd.h>
 
 #include <algorithm>
@@ -115,9 +114,10 @@ TEST_F(TunerAudioSourceTest, PrimesAndStreamsPcmData) {
 
   // Write 1 period (10 ms): still below the 2-period (20 ms) prime threshold.
   const std::vector<int16_t> period1(kFrameBlockSamples, 1111);
-  ASSERT_EQ(WriteAll(client, reinterpret_cast<const char*>(period1.data()),
-                     kFrameBlockBytes),
-            static_cast<ssize_t>(kFrameBlockBytes));
+  ASSERT_EQ(
+      WriteAll(client, reinterpret_cast<const char*>(period1.data()),
+               kFrameBlockBytes),
+      static_cast<ssize_t>(kFrameBlockBytes));  // NOLINT(misc-include-cleaner)
   EXPECT_EQ(
       source.GetMoreAudioData(out.data(), kBytesPerSample, kSamplesPerChannel,
                               kChannels, kSampleRate, muted),

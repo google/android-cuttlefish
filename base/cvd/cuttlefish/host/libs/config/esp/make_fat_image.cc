@@ -16,7 +16,7 @@
 #include "cuttlefish/host/libs/config/esp/make_fat_image.h"
 
 #include <fcntl.h>
-#include <sys/types.h>
+#include <sys/types.h>  // NOLINT(misc-include-cleaner)
 
 #include <string>
 #include <vector>
@@ -32,6 +32,7 @@ namespace cuttlefish {
 
 Result<void> MakeFatImage(const std::string& data_image, int data_image_mb,
                           int offset_num_mb) {
+  // NOLINTNEXTLINE(misc-include-cleaner)
   off_t offset_size_bytes = static_cast<off_t>(offset_num_mb) << 20;
   off_t image_size_bytes = static_cast<off_t>(data_image_mb) << 20;
 

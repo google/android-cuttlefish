@@ -16,7 +16,6 @@
 
 #include <gtest/gtest.h>
 #include <stdlib.h>
-#include <sys/types.h>
 #include <unistd.h>
 
 #include <algorithm>
@@ -47,7 +46,7 @@ namespace {
 bool ReadExactly(const SharedFD& fd, std::span<uint8_t> buffer) {
   return cuttlefish::ReadExact(fd, reinterpret_cast<char*>(buffer.data()),
                                buffer.size()) ==
-         static_cast<ssize_t>(buffer.size());
+         static_cast<ssize_t>(buffer.size());  // NOLINT(misc-include-cleaner)
 }
 
 constexpr int16_t kNoiseAmplitude = 4000;

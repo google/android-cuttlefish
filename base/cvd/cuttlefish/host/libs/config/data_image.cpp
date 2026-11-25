@@ -18,7 +18,7 @@
 #include <fcntl.h>
 #include <stddef.h>
 #include <stdint.h>
-#include <sys/types.h>
+#include <sys/types.h>  // NOLINT(misc-include-cleaner)
 
 #include <string>
 #include <utility>
@@ -78,6 +78,7 @@ Result<void> ResizeImage(const std::string& data_image, int data_image_mb,
     LOG(INFO) << data_image << " is already the right size";
     return {};
   }
+  // NOLINTNEXTLINE(misc-include-cleaner)
   off_t raw_target = static_cast<off_t>(data_image_mb) << 20;
   Fd fd = CF_EXPECT(Fd::Open(data_image, O_RDWR));
   CF_EXPECTF(fd.Truncate(raw_target), "`truncate --size={}M {} fail: {}",

@@ -20,7 +20,7 @@
 #include <linux/netlink.h>
 #include <stddef.h>
 #include <sys/socket.h>
-#include <sys/types.h>
+#include <sys/types.h>  // NOLINT(misc-include-cleaner)
 
 #include <memory>
 #include <utility>
@@ -40,6 +40,7 @@ class KernelNfnetlinkSocket : public NfnetlinkSocket {
 
   Result<std::vector<char>> Transact(
       const std::vector<char>& messages) override {
+    // NOLINTNEXTLINE(misc-include-cleaner)
     const ssize_t sent = fd_->Send(messages.data(), messages.size(), 0);
     CF_EXPECTF(sent == static_cast<ssize_t>(messages.size()),
                "Failed to send to netfilter: {}", fd_->StrError());

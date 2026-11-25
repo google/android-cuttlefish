@@ -152,7 +152,7 @@ gfxstream::expected<bool, vk::Result> CanHandlePrecisionQualifierWithYuvSampler(
   const std::vector<vk::DescriptorSetLayout>
       pipelineLayoutDescriptorSetLayouts = {
           *descriptorSet0Layout,
-      };
+  };
   const vk::PipelineLayoutCreateInfo pipelineLayoutCreateInfo = {
       .setLayoutCount =
           static_cast<uint32_t>(pipelineLayoutDescriptorSetLayouts.size()),
@@ -192,7 +192,7 @@ gfxstream::expected<bool, vk::Result> CanHandlePrecisionQualifierWithYuvSampler(
   const vk::PipelineInputAssemblyStateCreateInfo
       pipelineInputAssemblyStateCreateInfo = {
           .topology = vk::PrimitiveTopology::eTriangleStrip,
-      };
+  };
   const vk::PipelineViewportStateCreateInfo pipelineViewportStateCreateInfo = {
       .viewportCount = 1,
       .pViewports = nullptr,
@@ -211,7 +211,7 @@ gfxstream::expected<bool, vk::Result> CanHandlePrecisionQualifierWithYuvSampler(
           .depthBiasClamp = 0.0f,
           .depthBiasSlopeFactor = 0.0f,
           .lineWidth = 1.0f,
-      };
+  };
   const vk::SampleMask pipelineSampleMask = 65535;
   const vk::PipelineMultisampleStateCreateInfo
       pipelineMultisampleStateCreateInfo = {
@@ -221,7 +221,7 @@ gfxstream::expected<bool, vk::Result> CanHandlePrecisionQualifierWithYuvSampler(
           .pSampleMask = &pipelineSampleMask,
           .alphaToCoverageEnable = VK_FALSE,
           .alphaToOneEnable = VK_FALSE,
-      };
+  };
   const vk::PipelineDepthStencilStateCreateInfo
       pipelineDepthStencilStateCreateInfo = {
           .depthTestEnable = VK_FALSE,
@@ -251,7 +251,7 @@ gfxstream::expected<bool, vk::Result> CanHandlePrecisionQualifierWithYuvSampler(
               },
           .minDepthBounds = 0.0f,
           .maxDepthBounds = 0.0f,
-      };
+  };
   const std::vector<vk::PipelineColorBlendAttachmentState>
       pipelineColorBlendAttachments = {
           vk::PipelineColorBlendAttachmentState{
@@ -267,7 +267,7 @@ gfxstream::expected<bool, vk::Result> CanHandlePrecisionQualifierWithYuvSampler(
                                 vk::ColorComponentFlagBits::eB |
                                 vk::ColorComponentFlagBits::eA,
           },
-      };
+  };
   const vk::PipelineColorBlendStateCreateInfo
       pipelineColorBlendStateCreateInfo = {
           .logicOpEnable = VK_FALSE,
@@ -281,7 +281,7 @@ gfxstream::expected<bool, vk::Result> CanHandlePrecisionQualifierWithYuvSampler(
               0.0f,
               0.0f,
           }},
-      };
+  };
   const std::vector<vk::DynamicState> pipelineDynamicStates = {
       vk::DynamicState::eViewport,
       vk::DynamicState::eScissor,

@@ -29,6 +29,7 @@
 #include <optional>
 #include <set>
 #include <variant>
+#include <vector>
 
 #include <android-base/thread_annotations.h>
 #include <android-base/threads.h>

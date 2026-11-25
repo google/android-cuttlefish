@@ -32,7 +32,7 @@ DEFINE_string(use_cvdalloc, "unset", "Acquire static resources with cvdalloc.");
 namespace cuttlefish {
 
 Result<UseCvdallocFlag> UseCvdallocFlag::FromGlobalGflags(
-    const Defaults &defaults) {
+    const Defaults& defaults) {
   const auto flag_info = gflags::GetCommandLineFlagInfoOrDie("use_cvdalloc");
   bool flag_default = defaults.BoolValue("use_cvdalloc").value_or(false);
   FromGflags<bool> result =

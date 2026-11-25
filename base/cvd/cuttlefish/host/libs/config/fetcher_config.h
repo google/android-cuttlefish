@@ -34,7 +34,7 @@ namespace cuttlefish {
  * what purpose is it serving?
  */
 struct CvdFile {
-  FileSource source;
+  FileSource source = FileSource::UNKNOWN_PURPOSE;
   std::string build_id;
   std::string build_target;
   std::string file_path;
