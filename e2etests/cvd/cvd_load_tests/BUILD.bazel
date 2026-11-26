@@ -24,8 +24,7 @@ cvd_load_test(
     config = "configs/aosp_main_x64_phone.json",
 )
 
-# TODO(b/588019433): Re-enable once the sdv load test is fixed.
-# cvd_load_test(
-#     name = "git_sw_car_dev_sdv",
-#     config = "configs/git_sw_car_dev_sdv.json",
-# )
+cvd_load_test(
+    name = "git_sw_car_dev_sdv",
+    config = "configs/git_sw_car_dev_sdv.json",
+)
