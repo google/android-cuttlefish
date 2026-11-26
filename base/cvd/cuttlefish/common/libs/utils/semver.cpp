@@ -17,6 +17,7 @@
 #include "cuttlefish/common/libs/utils/semver.h"
 
 #include <regex>
+#include <tuple>
 
 #include "absl/strings/numbers.h"
 #include "absl/strings/string_view.h"
@@ -24,6 +25,11 @@
 #include "cuttlefish/result/result.h"
 
 namespace cuttlefish {
+
+bool SemVer::IsAtLeast(int major, int minor, int patch) const {
+  return std::tie(this->major, this->minor, this->patch) >=
+         std::tie(major, minor, patch);
+}
 
 Result<SemVer> ParseSemVer(absl::string_view str) {
   // From

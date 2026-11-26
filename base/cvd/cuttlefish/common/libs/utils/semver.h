@@ -30,6 +30,11 @@ struct SemVer {
   int patch;
   std::string prerelease;
   std::string build_metadata;
+
+  // Returns whether this version is greater than or equal to
+  // `major`.`minor`.`patch`. Only the numeric components are compared; the
+  // prerelease and build metadata are ignored.
+  bool IsAtLeast(int major, int minor, int patch = 0) const;
 };
 
 Result<SemVer> ParseSemVer(absl::string_view str);
