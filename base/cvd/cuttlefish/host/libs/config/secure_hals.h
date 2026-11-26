@@ -29,6 +29,7 @@ enum class SecureHal {
   kGuestKeymintNone,
   kGuestKeymintTrustyInsecure,
   kGuestStrongboxInsecure,
+  kGuestWeaverTrustyInsecure,
   kHostKeymintInsecure,
   kHostKeymintSecure,
   kHostGatekeeperInsecure,

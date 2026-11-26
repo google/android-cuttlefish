@@ -242,5 +242,58 @@ TEST(BootconfigArgsTest, ParseFormatAndValidateGuestNoneSecureHals) {
               IsError());
 }
 
+TEST(BootconfigArgsTest, GuestWeaverTrustyInsecureSelectsTrustyWeaverApex) {
+  CuttlefishConfig config;
+  config.set_vm_manager(VmmMode::kCrosvm);
+  config.set_secure_hals({
+      SecureHal::kGuestKeymintTrustyInsecure,
+      SecureHal::kGuestGatekeeperInsecure,
+      SecureHal::kGuestWeaverTrustyInsecure,
+  });
+  CuttlefishConfig::MutableInstanceSpecific mutable_instance =
+      config.ForInstance(1);
+  mutable_instance.set_target_arch(Arch::X86_64);
+  mutable_instance.set_gpu_mode(GpuMode::None);
+  mutable_instance.set_virtual_disk_paths({"disk.img"});
+
+  const CuttlefishConfig& const_config = config;
+  const CuttlefishConfig::InstanceSpecific instance =
+      const_config.ForInstance(1);
+  const std::unordered_map<std::string, std::string> args =
+      CF_ASSERT(BootconfigArgsFromConfig(const_config, instance, {}));
+
+  EXPECT_THAT(
+      args,
+      Contains(
+          Pair("androidboot.vendor.apex.com.android.hardware.keymint",
+               "com.android.hardware.keymint.rust_cf_guest_trusty_nonsecure")));
+  EXPECT_THAT(
+      args,
+      Contains(Pair("androidboot.vendor.apex.com.android.hardware.gatekeeper",
+                    "com.android.hardware.gatekeeper.nonsecure")));
+  EXPECT_THAT(
+      args,
+      Contains(Pair("androidboot.vendor.apex.com.android.hardware.weaver",
+                    "com.android.hardware.weaver.cf_guest_trusty_nonsecure")));
+}
+
+TEST(BootconfigArgsTest, ParseFormatAndValidateGuestWeaverTrustyInsecure) {
+  const std::set<SecureHal> hals = CF_ASSERT(
+      ParseSecureHals("guest_keymint_trusty_insecure,guest_gatekeeper_insecure,"
+                      "guest_weaver_trusty_insecure"));
+  EXPECT_EQ(hals.count(SecureHal::kGuestWeaverTrustyInsecure), 1);
+  EXPECT_EQ(ToString(SecureHal::kGuestWeaverTrustyInsecure),
+            "guest_weaver_trusty_insecure");
+  EXPECT_THAT(ValidateSecureHals(hals), IsOk());
+
+  const SecureHal alias =
+      CF_ASSERT(ParseSecureHal("guest_weaver_insecure_trusty"));
+  EXPECT_EQ(alias, SecureHal::kGuestWeaverTrustyInsecure);
+
+  const std::set<SecureHal> conflict =
+      CF_ASSERT(ParseSecureHals("weaver,guest_weaver_trusty_insecure"));
+  EXPECT_THAT(ValidateSecureHals(conflict), IsError());
+}
+
 }  // namespace
 }  // namespace cuttlefish

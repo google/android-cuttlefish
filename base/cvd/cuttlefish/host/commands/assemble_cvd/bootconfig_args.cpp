@@ -374,6 +374,9 @@ Result<std::unordered_map<std::string, std::string>> BootconfigArgsFromConfig(
   if (secure_hals.count(SecureHal::kHostWeaverSecure)) {
     bootconfig_args["androidboot.vendor.apex.com.android.hardware.weaver"] =
         "com.android.hardware.weaver.cf";
+  } else if (secure_hals.count(SecureHal::kGuestWeaverTrustyInsecure)) {
+    bootconfig_args["androidboot.vendor.apex.com.android.hardware.weaver"] =
+        "com.android.hardware.weaver.cf_guest_trusty_nonsecure";
   } else {
     bootconfig_args["androidboot.vendor.apex.com.android.hardware.weaver"] =
         "none";
