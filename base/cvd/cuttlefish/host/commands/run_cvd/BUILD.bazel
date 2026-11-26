@@ -170,6 +170,7 @@ cf_cc_library(
         "//cuttlefish/common/libs/utils:json",
         "//cuttlefish/files:file_exists",
         "//cuttlefish/host/commands/run_cvd/launch:snapshot_control_files",
+        "//cuttlefish/host/commands/run_cvd/launch:ti50_emulator",
         "//cuttlefish/host/commands/run_cvd/launch:webrtc_controller",
         "//cuttlefish/host/libs/command_util",
         "//cuttlefish/host/libs/command_util:libcuttlefish_run_cvd_proto",

@@ -40,6 +40,7 @@
 #include "cuttlefish/common/libs/fs/shared_select.h"
 #include "cuttlefish/common/libs/utils/files.h"
 #include "cuttlefish/host/commands/run_cvd/launch/snapshot_control_files.h"
+#include "cuttlefish/host/commands/run_cvd/launch/ti50_emulator.h"
 #include "cuttlefish/host/commands/run_cvd/launch/webrtc_controller.h"
 #include "cuttlefish/host/libs/command_util/runner/defs.h"
 #include "cuttlefish/host/libs/command_util/runner/run_cvd.pb.h"
@@ -426,6 +427,12 @@ bool ServerLoopImpl::PowerwashFiles() {
 
   // TODO(schuffelen): Clean up duplication with assemble_cvd
   unlink(instance_.PerInstancePath("NVChip").c_str());
+  Result<void> ti50_reset_res = ResetTi50Emulator(instance_);
+  if (!ti50_reset_res.has_value()) {
+    LOG(ERROR) << "ResetTi50Emulator failed: "
+               << ti50_reset_res.error().FormatForEnv();
+    return false;
+  }
 
   const std::string kregistry_path = AccessKregistryPath(instance_);
   unlink(kregistry_path.c_str());
