@@ -15,8 +15,10 @@
 
 #include "cuttlefish/host/commands/cvd/cli/commands/host_tool_target.h"
 
+#include <filesystem>
 #include <string>
 
+#include "android-base/file.h"
 #include "gmock/gmock.h"
 #include "gtest/gtest.h"
 
@@ -60,6 +62,33 @@ TEST(HostToolManager, KnownBins) {
       << "start_bin was " << *start_bin;
   ASSERT_TRUE(*stop_bin == "cvd_internal_stop" || *stop_bin == "stop_cvd")
       << "stop_bin was " << *stop_bin;
+}
+
+TEST(HostToolTarget, HostBugreportBinFallback) {
+  TemporaryDir temp_dir;
+  const std::filesystem::path bin_dir =
+      std::filesystem::path(temp_dir.path) / "bin";
+  HostToolTarget target(temp_dir.path);
+
+  EXPECT_THAT(target.GetHostBugreportBinName(), IsError());
+
+  ASSERT_TRUE(std::filesystem::create_directory(bin_dir));
+  EXPECT_THAT(target.GetHostBugreportBinName(), IsError());
+
+  const std::filesystem::path legacy_bin = bin_dir / "cvd_host_bugreport";
+  ASSERT_TRUE(android::base::WriteStringToFile("", legacy_bin.string()));
+  EXPECT_THAT(target.GetHostBugreportBinName(),
+              IsOkAndValue("cvd_host_bugreport"));
+
+  const std::filesystem::path internal_bin =
+      bin_dir / "cvd_internal_host_bugreport";
+  ASSERT_TRUE(android::base::WriteStringToFile("", internal_bin.string()));
+  EXPECT_THAT(target.GetHostBugreportBinName(),
+              IsOkAndValue("cvd_internal_host_bugreport"));
+
+  ASSERT_TRUE(std::filesystem::remove(legacy_bin));
+  EXPECT_THAT(target.GetHostBugreportBinName(),
+              IsOkAndValue("cvd_internal_host_bugreport"));
 }
 
 }  // namespace cuttlefish
