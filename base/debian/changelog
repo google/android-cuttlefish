@@ -1,3 +1,23 @@
+cuttlefish-common (1.59.1) unstable; urgency=medium
+
+  * cvd: Guard monitor socket path length and recreate missing metrics dir by @rmuthiah in https://github.com/google/android-cuttlefish/pull/3607
+  * cvd: include <sys/file.h> in data_viewer.h by @adelva1984 in https://github.com/google/android-cuttlefish/pull/3644
+  * utils: enable clang-tidy on vsock_connection by @adelva1984 in https://github.com/google/android-cuttlefish/pull/3645
+  * utils: resolve vsock deadlock and remove IsConnected_Unguarded workaround by @sferrogoo in https://github.com/google/android-cuttlefish/pull/2686
+  * base/debian: Set sticky bit on /var/tmp/cvd by @0405ysj in https://github.com/google/android-cuttlefish/pull/3696
+  * cvd: Set up cvd directories without following symlinks by @rmuthiah in https://github.com/google/android-cuttlefish/pull/3687
+  * process: Allow GetCmdArgs to read world-readable argv across UIDs by @rmuthiah in https://github.com/google/android-cuttlefish/pull/3685
+  * cvd: Reset instance locks in place and record the holder UID by @rmuthiah in https://github.com/google/android-cuttlefish/pull/3688
+  * cvd: Pre-create shared instance locks in cuttlefish-host-resources by @rmuthiah in https://github.com/google/android-cuttlefish/pull/3689
+  * cvd: Use pre-created instance locks instead of creating them by @rmuthiah in https://github.com/google/android-cuttlefish/pull/3608
+  * cvd: Reconcile stale instance states and prune deleted group directories by @rmuthiah in https://github.com/google/android-cuttlefish/pull/3609
+  * Fix screen recording crashes and other bugs by @jemoreira in https://github.com/google/android-cuttlefish/pull/3717
+  * cvd: Scope create --reuse by slot and preserve default-HOME userdata by @rmuthiah in https://github.com/google/android-cuttlefish/pull/3602
+  * cvd: Prune broken groups and reconcile concurrent teardown in fleet/ps/status by @rmuthiah in https://github.com/google/android-cuttlefish/pull/3686
+  * Fall back to cvd_host_bugreport when cvd_internal_host_bugreport is absent by @rmuthiah in https://github.com/google/android-cuttlefish/pull/3728
+
+ -- Ram Muthiah <rammuthiah@google.com>  Thu, 26 Nov 2026 23:49:18 +0000
+
 cuttlefish-common (1.59.0) unstable; urgency=medium
 
   * Start development on 1.59.0 by @rmuthiah in https://github.com/google/android-cuttlefish/pull/3521
