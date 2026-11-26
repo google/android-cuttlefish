@@ -272,8 +272,7 @@ GetGpuModeRequirementsMap() {
             if (!semver_result.has_value()) {
               return false;
             }
-            SemVer semver = *semver_result;
-            return semver.major >= 6 && semver.minor >= 13;
+            return semver_result->IsAtLeast(6, 13);
           },
       .success_explanation =
           "The host's KVM should be able to map GPU memory into the guest.",

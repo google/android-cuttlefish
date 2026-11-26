@@ -45,4 +45,24 @@ TEST(SemVer, ParseWithPrereleaseAndMetadata) {
 
 TEST(SemVer, ParseInvalid) { EXPECT_THAT(ParseSemVer("asdfsf"), IsError()); }
 
+TEST(SemVer, IsAtLeast) {
+  EXPECT_FALSE(ParseSemVer("5.15.0")->IsAtLeast(6, 13));
+  EXPECT_FALSE(ParseSemVer("6.12.0")->IsAtLeast(6, 13));
+  EXPECT_TRUE(ParseSemVer("6.13.0")->IsAtLeast(6, 13));
+  EXPECT_TRUE(ParseSemVer("6.14.0")->IsAtLeast(6, 13));
+  EXPECT_TRUE(ParseSemVer("7.0.0")->IsAtLeast(6, 13));
+  EXPECT_TRUE(ParseSemVer("7.3.0")->IsAtLeast(6, 13));
+}
+
+TEST(SemVer, IsAtLeastComparesPatch) {
+  EXPECT_FALSE(ParseSemVer("6.13.1")->IsAtLeast(6, 13, 2));
+  EXPECT_TRUE(ParseSemVer("6.13.2")->IsAtLeast(6, 13, 2));
+}
+
+TEST(SemVer, IsAtLeastIgnoresPrerelease) {
+  auto result = ParseSemVer("7.3.0-10-generic");
+  ASSERT_THAT(result, IsOk());
+  EXPECT_TRUE(result->IsAtLeast(6, 13));
+}
+
 }  // namespace cuttlefish
