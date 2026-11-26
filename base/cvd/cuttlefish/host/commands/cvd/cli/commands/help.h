@@ -16,20 +16,19 @@
 
 #pragma once
 
-#include <memory>
 #include <string>
 #include <vector>
 
 #include "cuttlefish/host/commands/cvd/cli/command_request.h"
 #include "cuttlefish/host/commands/cvd/cli/commands/command_handler.h"
+#include "cuttlefish/host/commands/cvd/cli/handler_list.h"
 #include "cuttlefish/result/result.h"
 
 namespace cuttlefish {
 
 class CvdHelpHandler : public CvdCommandHandler {
  public:
-  CvdHelpHandler(
-      const std::vector<std::unique_ptr<CvdCommandHandler>>& request_handlers);
+  CvdHelpHandler(const HandlerList&);
 
   Result<void> Handle(const CommandRequest& request) override;
   std::vector<std::string> CmdList() const override;
@@ -41,7 +40,7 @@ class CvdHelpHandler : public CvdCommandHandler {
   std::string TopLevelHelp();
   Result<std::string> SubCommandHelp(const CommandRequest& request);
 
-  const std::vector<std::unique_ptr<CvdCommandHandler>>& request_handlers_;
+  const HandlerList& handlers_;
 };
 
 }  // namespace cuttlefish

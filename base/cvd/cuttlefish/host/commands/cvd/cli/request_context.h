@@ -41,8 +41,7 @@ class RequestContext : public HandlerList {
   std::vector<std::unique_ptr<CvdCommandHandler>> request_handlers_;
 };
 
-Result<CvdCommandHandler*> RequestHandler(
-    const CommandRequest& request,
-    const std::vector<std::unique_ptr<CvdCommandHandler>>& handlers);
+Result<CvdCommandHandler*> RequestHandler(const CommandRequest& request,
+                                          const HandlerList&);
 
 }  // namespace cuttlefish

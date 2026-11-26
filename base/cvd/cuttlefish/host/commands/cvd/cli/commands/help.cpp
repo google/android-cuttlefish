@@ -30,6 +30,7 @@
 #include "cuttlefish/flag_parser/gflags_compat.h"
 #include "cuttlefish/host/commands/cvd/cli/command_request.h"
 #include "cuttlefish/host/commands/cvd/cli/commands/command_handler.h"
+#include "cuttlefish/host/commands/cvd/cli/handler_list.h"
 #include "cuttlefish/host/commands/cvd/cli/help_format.h"
 #include "cuttlefish/host/commands/cvd/cli/request_context.h"
 #include "cuttlefish/host/commands/cvd/cli/selector/selector_common_parser.h"
@@ -120,9 +121,8 @@ Result<CommandRequest> GetLookupRequest(const std::string& arg) {
 
 }  // namespace
 
-CvdHelpHandler::CvdHelpHandler(
-    const std::vector<std::unique_ptr<CvdCommandHandler>>& request_handlers)
-    : request_handlers_(request_handlers) {}
+CvdHelpHandler::CvdHelpHandler(const HandlerList& handlers)
+    : handlers_(handlers) {}
 
 Result<void> CvdHelpHandler::Handle(const CommandRequest& request) {
   std::vector<std::string> args = request.SubcommandArguments();
@@ -227,7 +227,7 @@ std::string CvdHelpHandler::TopLevelHelp() {
   help_message << FormatFlagsHelp(selector_flags);
 
   help_message << "Commands (cvd help <command> for more information):\n\n";
-  for (const auto& handler : request_handlers_) {
+  for (const auto& handler : handlers_.Handlers()) {
     if (!handler->RequiresDeviceExists()) {
       PrintHandler(help_message, *handler);
     }
@@ -235,7 +235,7 @@ std::string CvdHelpHandler::TopLevelHelp() {
 
   help_message << "\n  Device-Specific Commands (cvd help <command> for more "
                   "information):\n\n";
-  for (const auto& handler : request_handlers_) {
+  for (const auto& handler : handlers_.Handlers()) {
     if (handler->RequiresDeviceExists()) {
       PrintHandler(help_message, *handler);
     }
@@ -252,7 +252,7 @@ Result<std::string> CvdHelpHandler::SubCommandHelp(
   CF_EXPECT(!args.empty(),
             "Cannot process subcommand help without valid subcommand argument");
   CommandRequest lookup_request = CF_EXPECT(GetLookupRequest(args.front()));
-  auto handler = CF_EXPECT(RequestHandler(lookup_request, request_handlers_));
+  auto handler = CF_EXPECT(RequestHandler(lookup_request, handlers_));
 
   // Create new command with "<subcmd> --help" instead of "help <subcmd>"
   CommandRequest subcmd_request =

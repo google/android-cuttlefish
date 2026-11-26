@@ -58,6 +58,7 @@
 #include "cuttlefish/host/commands/cvd/cli/commands/status.h"
 #include "cuttlefish/host/commands/cvd/cli/commands/stop.h"
 #include "cuttlefish/host/commands/cvd/cli/commands/version.h"
+#include "cuttlefish/host/commands/cvd/cli/handler_list.h"
 #include "cuttlefish/host/commands/cvd/instances/instance_manager.h"
 #include "cuttlefish/host/commands/cvd/instances/lock/instance_lock.h"
 #include "cuttlefish/result/result.h"
@@ -150,8 +151,7 @@ RequestContext::RequestContext(InstanceManager& instance_manager,
       std::make_unique<CvdBugreportCommandHandler>(instance_manager));
   request_handlers_.emplace_back(
       std::make_unique<CvdStopCommandHandler>(instance_manager));
-  request_handlers_.emplace_back(
-      std::make_unique<CvdHelpHandler>(this->request_handlers_));
+  request_handlers_.emplace_back(std::make_unique<CvdHelpHandler>(*this));
   request_handlers_.emplace_back(
       std::make_unique<CvdInputDevicesHandler>(instance_manager));
   request_handlers_.emplace_back(std::make_unique<LintCommandHandler>());
@@ -190,7 +190,7 @@ RequestContext::RequestContext(InstanceManager& instance_manager,
 
 Result<CvdCommandHandler*> RequestContext::Handler(
     const CommandRequest& request) {
-  return CF_EXPECT(RequestHandler(request, request_handlers_));
+  return CF_EXPECT(RequestHandler(request, *this));
 }
 
 const std::vector<std::unique_ptr<CvdCommandHandler>>&
@@ -198,11 +198,10 @@ RequestContext::Handlers() const {
   return request_handlers_;
 }
 
-Result<CvdCommandHandler*> RequestHandler(
-    const CommandRequest& request,
-    const std::vector<std::unique_ptr<CvdCommandHandler>>& handlers) {
+Result<CvdCommandHandler*> RequestHandler(const CommandRequest& request,
+                                          const HandlerList& handlers) {
   std::vector<CvdCommandHandler*> compatible_handlers;
-  for (auto& handler : handlers) {
+  for (auto& handler : handlers.Handlers()) {
     if (CanHandle(*handler, request)) {
       compatible_handlers.push_back(handler.get());
     }
@@ -214,7 +213,7 @@ Result<CvdCommandHandler*> RequestHandler(
                "include the exact command that raised the error.");
 
   if (compatible_handlers.size() != 1) {
-    HandleNoMatches(request, handlers);
+    HandleNoMatches(request, handlers.Handlers());
     return CF_ERRF("Unable to find matching command for \"cvd {}\".",
                    request.Subcommand());
   }
