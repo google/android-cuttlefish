@@ -32,6 +32,7 @@ cf_cc_test(
         "//cuttlefish/common/libs/utils:environment",
         "//cuttlefish/host/commands/cvd/cli/commands:host_tool_target",
         "//cuttlefish/result:result_matchers",
+        "@android_system_libbase//:file_logging",
     ],
 )
 

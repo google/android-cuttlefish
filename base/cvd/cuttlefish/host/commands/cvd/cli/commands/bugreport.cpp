@@ -34,6 +34,7 @@
 #include "cuttlefish/flag_parser/flag.h"
 #include "cuttlefish/flag_parser/gflags_compat.h"
 #include "cuttlefish/host/commands/cvd/cli/command_request.h"
+#include "cuttlefish/host/commands/cvd/cli/commands/host_tool_target.h"
 #include "cuttlefish/host/commands/cvd/cli/selector/selector.h"
 #include "cuttlefish/host/commands/cvd/cli/utils.h"
 #include "cuttlefish/host/commands/cvd/instances/instance_manager.h"
@@ -108,15 +109,18 @@ Result<void> CvdBugreportCommandHandler::Handle(const CommandRequest& request) {
   std::string home = instance_group.HomeDir();
   env["HOME"] = home;
   env[kAndroidHostOut] = android_host_out;
+  const std::string bin_name = HostToolTarget(android_host_out)
+                                   .GetHostBugreportBinName()
+                                   .value_or(kHostBugreportBin);
   const std::string bin_path =
-      absl::StrCat(android_host_out, "/bin/", kHostBugreportBin);
+      absl::StrCat(android_host_out, "/bin/", bin_name);
 
   ConstructCommandParam construct_cmd_param{.bin_path = bin_path,
                                             .home = home,
                                             .args = cmd_args,
                                             .envs = env,
                                             .working_dir = CurrentDirectory(),
-                                            .command_name = kHostBugreportBin};
+                                            .command_name = bin_name};
   Command command = CF_EXPECT(ConstructCommand(construct_cmd_param));
 
   // Wait for the command to finish but ignore the result. The command will fail
