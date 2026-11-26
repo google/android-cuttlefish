@@ -86,6 +86,11 @@ Result<std::string> HostToolTarget::GetStatusBinName() const {
   return CF_EXPECT(GetBinName({"cvd_internal_status", "cvd_status"}));
 }
 
+Result<std::string> HostToolTarget::GetHostBugreportBinName() const {
+  return CF_EXPECT(
+      GetBinName({"cvd_internal_host_bugreport", "cvd_host_bugreport"}));
+}
+
 Result<std::string> HostToolTarget::GetRestartBinPath() const {
   std::string bin_name = CF_EXPECT(GetBinName({"restart_cvd"}));
   return fmt::format("{}/bin/{}", artifacts_path_, bin_name);
