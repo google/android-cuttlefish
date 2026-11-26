@@ -28,7 +28,11 @@ namespace cuttlefish {
 
 class RequestContext : public HandlerList {
  public:
-  RequestContext(InstanceManager& instance_manager, InstanceLockFileManager&);
+  explicit RequestContext(InstanceManager& instance_manager,
+                          InstanceLockFileManager&);
+  // request_handlers_ holds pointers back to the RequestContext
+  RequestContext(RequestContext&&) = delete;
+  RequestContext& operator=(RequestContext&&) = delete;
 
   const std::vector<std::unique_ptr<CvdCommandHandler>>& Handlers()
       const override;

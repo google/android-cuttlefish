@@ -83,7 +83,6 @@ void SuggestAlternativeCommands(
              request.Subcommand());
   const std::vector<std::string> possible_commands =
       GetPossibleCommands(request, handlers);
-  std::string addendum;
   if (!possible_commands.empty()) {
     fmt::print(std::cerr, "\n\nDid you mean one of:\n\t{}\n",
                fmt::join(possible_commands, "\n\t"));

@@ -28,7 +28,7 @@ namespace cuttlefish {
 
 class CvdHelpHandler : public CvdCommandHandler {
  public:
-  CvdHelpHandler(const HandlerList&);
+  explicit CvdHelpHandler(const HandlerList&);
 
   Result<void> Handle(const CommandRequest& request) override;
   std::vector<std::string> CmdList() const override;
