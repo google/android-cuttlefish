@@ -193,6 +193,11 @@ Result<CvdCommandHandler*> RequestContext::Handler(
   return CF_EXPECT(RequestHandler(request, request_handlers_));
 }
 
+const std::vector<std::unique_ptr<CvdCommandHandler>>&
+RequestContext::Handlers() const {
+  return request_handlers_;
+}
+
 Result<CvdCommandHandler*> RequestHandler(
     const CommandRequest& request,
     const std::vector<std::unique_ptr<CvdCommandHandler>>& handlers) {
