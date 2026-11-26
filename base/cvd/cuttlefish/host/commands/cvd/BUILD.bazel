@@ -15,7 +15,8 @@ cf_cc_library(
     deps = [
         "//cuttlefish/host/commands/cvd/cli:command_request",
         "//cuttlefish/host/commands/cvd/cli:frontline_parser",
-        "//cuttlefish/host/commands/cvd/cli:nesting_commands",
+        "//cuttlefish/host/commands/cvd/cli:request_context",
+        "//cuttlefish/host/commands/cvd/cli:request_handler",
         "//cuttlefish/host/commands/cvd/cli/commands:command_handler",
         "//cuttlefish/host/commands/cvd/cli/selector:selector_common_parser",
         "//cuttlefish/host/commands/cvd/instances:instance_manager",

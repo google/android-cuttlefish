@@ -4,15 +4,6 @@ package(
     default_visibility = ["//:android_cuttlefish"],
 )
 
-exports_files([
-    "create.cpp",
-    "create.h",
-    "help.cpp",
-    "help.h",
-    "load_configs.cpp",
-    "load_configs.h",
-])
-
 cf_build_test(name = "commands_build_test")
 
 cf_cc_library(
@@ -87,6 +78,47 @@ cf_cc_library(
 )
 
 cf_cc_library(
+    name = "create",
+    srcs = ["create.cpp"],
+    hdrs = ["create.h"],
+    deps = [
+        "//cuttlefish/common/libs/utils:contains",
+        "//cuttlefish/common/libs/utils:environment",
+        "//cuttlefish/common/libs/utils:files",
+        "//cuttlefish/common/libs/utils:users",
+        "//cuttlefish/files:copy",
+        "//cuttlefish/files:directory_exists",
+        "//cuttlefish/files:file_exists",
+        "//cuttlefish/files:recursively_remove_directory",
+        "//cuttlefish/flag_parser",
+        "//cuttlefish/host/commands/cvd/cli:command_request",
+        "//cuttlefish/host/commands/cvd/cli:help_format",
+        "//cuttlefish/host/commands/cvd/cli:utils",
+        "//cuttlefish/host/commands/cvd/cli/commands:command_handler",
+        "//cuttlefish/host/commands/cvd/cli/commands:host_tool_target",
+        "//cuttlefish/host/commands/cvd/cli/commands:load_configs",
+        "//cuttlefish/host/commands/cvd/cli/commands:start",
+        "//cuttlefish/host/commands/cvd/cli/selector",
+        "//cuttlefish/host/commands/cvd/cli/selector:creation_analyzer",
+        "//cuttlefish/host/commands/cvd/cli/selector:num_instances_parser",
+        "//cuttlefish/host/commands/cvd/cli/selector:selector_common_parser",
+        "//cuttlefish/host/commands/cvd/cli/selector:selector_constants",
+        "//cuttlefish/host/commands/cvd/instances",
+        "//cuttlefish/host/commands/cvd/instances:cvd_persistent_data",
+        "//cuttlefish/host/commands/cvd/instances:instance_manager",
+        "//cuttlefish/host/commands/cvd/utils:common",
+        "//cuttlefish/posix:realpath",
+        "//cuttlefish/posix:remove",
+        "//cuttlefish/posix:strerror",
+        "//cuttlefish/posix:symlink",
+        "//cuttlefish/result",
+        "@abseil-cpp//absl/log",
+        "@abseil-cpp//absl/strings",
+        "@fmt",
+    ],
+)
+
+cf_cc_library(
     name = "display",
     srcs = ["display.cpp"],
     hdrs = ["display.h"],
@@ -155,6 +187,50 @@ cf_cc_library(
         "//cuttlefish/host/commands/cvd/instances:instance_manager",
         "//cuttlefish/result",
         "@jsoncpp",
+    ],
+)
+
+cf_cc_library(
+    name = "help",
+    srcs = ["help.cpp"],
+    hdrs = ["help.h"],
+    deps = [
+        "//cuttlefish/flag_parser",
+        "//cuttlefish/host/commands/cvd/cli:command_request",
+        "//cuttlefish/host/commands/cvd/cli:handler_list",
+        "//cuttlefish/host/commands/cvd/cli:help_format",
+        "//cuttlefish/host/commands/cvd/cli:request_handler",
+        "//cuttlefish/host/commands/cvd/cli/commands:command_handler",
+        "//cuttlefish/host/commands/cvd/cli/selector:selector_common_parser",
+        "//cuttlefish/result",
+        "@abseil-cpp//absl/strings",
+    ],
+)
+
+cf_cc_library(
+    name = "load_configs",
+    srcs = ["load_configs.cpp"],
+    hdrs = ["load_configs.h"],
+    deps = [
+        "//cuttlefish/common/libs/utils:files",
+        "//cuttlefish/flag_parser",
+        "//cuttlefish/host/commands/cvd/cli:command_request",
+        "//cuttlefish/host/commands/cvd/cli:help_format",
+        "//cuttlefish/host/commands/cvd/cli/commands:command_handler",
+        "//cuttlefish/host/commands/cvd/cli/commands:fetch",
+        "//cuttlefish/host/commands/cvd/cli/commands:start",
+        "//cuttlefish/host/commands/cvd/cli/parser:load_config_cc_proto",
+        "//cuttlefish/host/commands/cvd/cli/parser:load_configs_parser",
+        "//cuttlefish/host/commands/cvd/cli/selector:selector_common_parser",
+        "//cuttlefish/host/commands/cvd/fetch:fetch_cvd",
+        "//cuttlefish/host/commands/cvd/instances",
+        "//cuttlefish/host/commands/cvd/instances:cvd_persistent_data",
+        "//cuttlefish/host/commands/cvd/instances:instance_manager",
+        "//cuttlefish/host/commands/cvd/utils:common",
+        "//cuttlefish/host/commands/cvd/utils:interrupt_listener",
+        "//cuttlefish/result",
+        "@abseil-cpp//absl/log",
+        "@fmt",
     ],
 )
 
