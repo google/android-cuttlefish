@@ -19,12 +19,10 @@
 #include <memory>
 #include <vector>
 
-#include "cuttlefish/host/commands/cvd/cli/command_request.h"
 #include "cuttlefish/host/commands/cvd/cli/commands/command_handler.h"
 #include "cuttlefish/host/commands/cvd/cli/handler_list.h"
 #include "cuttlefish/host/commands/cvd/instances/instance_manager.h"
 #include "cuttlefish/host/commands/cvd/instances/lock/instance_lock.h"
-#include "cuttlefish/result/result.h"
 
 namespace cuttlefish {
 
@@ -32,16 +30,11 @@ class RequestContext : public HandlerList {
  public:
   RequestContext(InstanceManager& instance_manager, InstanceLockFileManager&);
 
-  Result<CvdCommandHandler*> Handler(const CommandRequest& request);
-
   const std::vector<std::unique_ptr<CvdCommandHandler>>& Handlers()
       const override;
 
  private:
   std::vector<std::unique_ptr<CvdCommandHandler>> request_handlers_;
 };
-
-Result<CvdCommandHandler*> RequestHandler(const CommandRequest& request,
-                                          const HandlerList&);
 
 }  // namespace cuttlefish

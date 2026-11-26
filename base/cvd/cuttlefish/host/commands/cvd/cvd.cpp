@@ -26,6 +26,7 @@
 #include "cuttlefish/host/commands/cvd/cli/commands/command_handler.h"
 #include "cuttlefish/host/commands/cvd/cli/frontline_parser.h"
 #include "cuttlefish/host/commands/cvd/cli/request_context.h"
+#include "cuttlefish/host/commands/cvd/cli/request_handler.h"
 #include "cuttlefish/host/commands/cvd/cli/selector/selector_common_parser.h"
 #include "cuttlefish/host/commands/cvd/instances/instance_manager.h"
 #include "cuttlefish/host/commands/cvd/instances/lock/instance_lock.h"
@@ -58,7 +59,7 @@ Result<void> Cvd::HandleCommand(
                     .Build());
 
   RequestContext context(instance_manager_, lock_file_manager_);
-  CvdCommandHandler* handler = CF_EXPECT(context.Handler(request));
+  CvdCommandHandler* handler = CF_EXPECT(RequestHandler(request, context));
 
   if (CF_EXPECT(HasHelpFlag(request.SubcommandArguments()))) {
     std::cout << CF_EXPECT(handler->DetailedHelp(request)) << std::endl;

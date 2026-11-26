@@ -32,7 +32,7 @@
 #include "cuttlefish/host/commands/cvd/cli/commands/command_handler.h"
 #include "cuttlefish/host/commands/cvd/cli/handler_list.h"
 #include "cuttlefish/host/commands/cvd/cli/help_format.h"
-#include "cuttlefish/host/commands/cvd/cli/request_context.h"
+#include "cuttlefish/host/commands/cvd/cli/request_handler.h"
 #include "cuttlefish/host/commands/cvd/cli/selector/selector_common_parser.h"
 #include "cuttlefish/result/result.h"
 

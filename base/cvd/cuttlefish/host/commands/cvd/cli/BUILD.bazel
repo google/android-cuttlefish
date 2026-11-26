@@ -108,6 +108,7 @@ cf_cc_library(
     name = "nesting_commands",
     srcs = [
         "request_context.cpp",
+        "request_handler.cc",
         "//cuttlefish/host/commands/cvd/cli/commands:create.cpp",
         "//cuttlefish/host/commands/cvd/cli/commands:help.cpp",
         "//cuttlefish/host/commands/cvd/cli/commands:load_configs.cpp",
@@ -115,6 +116,7 @@ cf_cc_library(
     hdrs = [
         "handler_list.h",
         "request_context.h",
+        "request_handler.h",
         "//cuttlefish/host/commands/cvd/cli/commands:create.h",
         "//cuttlefish/host/commands/cvd/cli/commands:help.h",
         "//cuttlefish/host/commands/cvd/cli/commands:load_configs.h",
