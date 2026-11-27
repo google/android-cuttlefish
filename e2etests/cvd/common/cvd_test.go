@@ -15,6 +15,7 @@
 package e2etests
 
 import (
+	"slices"
 	"testing"
 )
 
@@ -136,5 +137,59 @@ func TestParseCVDStatusJSON(t *testing.T) {
 				t.Errorf("expected status %q, got %q", tc.wantStat, entries[0].Status)
 			}
 		})
+	}
+}
+
+func TestBuildFetchCmd(t *testing.T) {
+	got := buildFetchCmd("cvd", "/tmp/dir", "gce", FetchArgs{
+		DefaultBuildBranch:            "git_main",
+		DefaultBuildTarget:            "aosp_cf_x86_64_only_phone-trunk_staging-userdebug",
+		BootloaderBuildBranch:         "aosp_u-boot-mainline",
+		BootloaderBuildTarget:         "u-boot_crosvm_x86_64",
+		AndroidEfiLoaderBuildBranch:   "aosp_uefi-gbl-mainline",
+		AndroidEfiLoaderBuildTarget:   "gbl_efi_dist_and_test",
+		AndroidEfiLoaderBuildArtifact: "gbl_x86_64_prod.efi",
+		KernelBuildBranch:             "aosp_kernel-common-android17-6.18",
+		KernelBuildTarget:             "kernel_virt_x86_64",
+	})
+	want := []string{
+		"cvd",
+		"fetch",
+		"--default_build=git_main/aosp_cf_x86_64_only_phone-trunk_staging-userdebug",
+		"--target_directory=/tmp/dir",
+		"--android_efi_loader_build=aosp_uefi-gbl-mainline/gbl_efi_dist_and_test{gbl_x86_64_prod.efi}",
+		"--bootloader_build=aosp_u-boot-mainline/u-boot_crosvm_x86_64",
+		"--kernel_build=aosp_kernel-common-android17-6.18/kernel_virt_x86_64",
+		"--credential_source=gce",
+	}
+	if !slices.Equal(got, want) {
+		t.Fatalf("buildFetchCmd() =\n%v\nwant:\n%v", got, want)
+	}
+}
+
+func TestParseFetcherConfigBuildID(t *testing.T) {
+	payload := []byte(`{
+		"cvd_files": {
+			"/tmp/bootloader": {
+				"source": "bootloader_build",
+				"build_id": "17012356",
+				"build_target": "u-boot_crosvm_x86_64"
+			},
+			"/tmp/kernel": {
+				"source": "kernel_build",
+				"build_id": "17005616",
+				"build_target": "kernel_virt_x86_64"
+			}
+		}
+	}`)
+	got, err := ParseFetcherConfigBuildID(payload, "kernel_build")
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+	if got != "17005616" {
+		t.Fatalf("got build_id %q, want %q", got, "17005616")
+	}
+	if _, err := ParseFetcherConfigBuildID(payload, "missing_source"); err == nil {
+		t.Fatalf("expected error for missing source")
 	}
 }
