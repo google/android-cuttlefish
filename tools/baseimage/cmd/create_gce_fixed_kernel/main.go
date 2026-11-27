@@ -18,8 +18,6 @@ import (
 	"flag"
 	"fmt"
 	"log"
-	"maps"
-	"slices"
 
 	"github.com/google/android-cuttlefish/tools/baseimage/pkg/cli"
 	"github.com/google/android-cuttlefish/tools/baseimage/pkg/gce"
@@ -28,17 +26,6 @@ import (
 
 // Cuttlefish base images are based on debian images.
 const debianSourceImageProject = "debian-cloud"
-
-var sourceImageMap = map[gce.Arch]map[int]string{
-	gce.ArchX86: {
-		12: "debian-12-bookworm-v20260114",
-		13: "debian-13-trixie-v20260114",
-	},
-	gce.ArchArm: {
-		12: "debian-12-bookworm-arm64-v20260114",
-		13: "debian-13-trixie-arm64-v20260114",
-	},
-}
 
 // Flags
 var (
@@ -78,16 +65,9 @@ func main() {
 		log.Fatal("usage: `-image-name` must not be empty")
 	}
 
-	if _, ok := sourceImageMap[arch.GceArch()]; !ok {
-		log.Fatalf("no source image found for arch %s: supported archs: %v",
-			arch,
-			slices.Collect(maps.Keys(sourceImageMap)))
-	}
-
-	if _, ok := sourceImageMap[arch.GceArch()][debianVersion]; !ok {
-		log.Fatalf("no source image found for debian %d: supported versions: %v",
-			debianVersion,
-			slices.Collect(maps.Keys(sourceImageMap[arch.GceArch()])))
+	sourceImageFamily, err := gce.DebianImageFamily(debianVersion, arch.GceArch())
+	if err != nil {
+		log.Fatal(err)
 	}
 
 	h, err := gce.NewGceHelper(project, zone)
@@ -95,13 +75,11 @@ func main() {
 		log.Fatal(err)
 	}
 
-	sourceImage := sourceImageMap[arch.GceArch()][debianVersion]
-	if srcExists, err := h.ImageExists(debianSourceImageProject, sourceImage); err != nil || !srcExists {
-		if err != nil {
-			log.Fatal(err)
-		}
-		log.Fatalf("source image %q does not exist in project %q", sourceImage, debianSourceImageProject)
+	srcImg, err := h.ImageFromFamily(debianSourceImageProject, sourceImageFamily)
+	if err != nil {
+		log.Fatalf("looking up image family %q in project %q: %v", sourceImageFamily, debianSourceImageProject, err)
 	}
+	log.Printf("resolved source image: %s/%s (family %s)", debianSourceImageProject, srcImg.Name, sourceImageFamily)
 
 	if exists, err := h.ImageExists(project, imageName); err != nil || exists {
 		if err != nil {
@@ -113,7 +91,7 @@ func main() {
 	buildImageOpts := gce.BuildImageOpts{
 		Arch:               arch.GceArch(),
 		SourceImageProject: debianSourceImageProject,
-		SourceImage:        sourceImage,
+		SourceImage:        srcImg.Name,
 		ImageName:          imageName,
 		ModifyFunc: func(project, zone, insName string) error {
 			if err := gce.UploadBashScript(project, zone, insName, "install_kernel_main.sh", scripts.InstallKernelMain); err != nil {
