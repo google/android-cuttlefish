@@ -201,7 +201,7 @@ func (h *GceHelper) CreateInstanceToValidateImage(name, imageProject, image stri
 		GuestAccelerators: []*compute.AcceleratorConfig{
 			{
 				AcceleratorCount: 1,
-				AcceleratorType:  fmt.Sprintf("zones/%s/acceleratorTypes/nvidia-tesla-p100-vws", h.Zone),
+				AcceleratorType:  fmt.Sprintf("zones/%s/acceleratorTypes/nvidia-tesla-t4", h.Zone),
 			},
 		},
 		Scheduling: &compute.Scheduling{
@@ -236,16 +236,41 @@ func (h *GceHelper) DeleteInstance(name string) error {
 }
 
 func (h *GceHelper) CreateImage(ins, disk, name string) error {
+	return h.CreateImageWithLabels(ins, disk, name, nil)
+}
+
+func (h *GceHelper) CreateImageWithLabels(ins, disk, name string, labels map[string]string) error {
 	payload := &compute.Image{
 		Name:       name,
 		SourceDisk: fmt.Sprintf("projects/%s/zones/%s/disks/%s", h.Project, h.Zone, disk),
 		Licenses:   []string{"https://www.googleapis.com/compute/v1/projects/vm-options/global/licenses/enable-vmx"},
+		Labels:     labels,
 	}
 	op, err := h.Service.Images.Insert(h.Project, payload).Do()
 	if err != nil {
 		return err
 	}
 	return h.waitForGlobalOperation(op)
+}
+
+func (h *GceHelper) Image(project, name string) (*compute.Image, error) {
+	return h.Service.Images.Get(project, name).Do()
+}
+
+// ImageMatchesArch reports whether a GCE image's Architecture field matches arch.
+func ImageMatchesArch(arch Arch, img *compute.Image) bool {
+	if img == nil {
+		return false
+	}
+	switch arch {
+	case ArchX86:
+		// Legacy x86_64 GCE images may leave Architecture empty.
+		return img.Architecture == "" || img.Architecture == "X86_64"
+	case ArchArm:
+		return img.Architecture == "ARM64"
+	default:
+		return false
+	}
 }
 
 func (h *GceHelper) ImageExists(project, name string) (bool, error) {
@@ -277,6 +302,7 @@ type BuildImageOpts struct {
 	SourceImageProject     string
 	SourceImage            string
 	ImageName              string
+	Labels                 map[string]string
 	CreateAttachedDiskOpts CreateDiskOpts
 	ModifyFunc             func(project, zone, insName string) error
 }
@@ -362,7 +388,7 @@ func (h *GceHelper) BuildImage(project, zone string, opts BuildImageOpts) error 
 	log.Println("instance deleted")
 
 	log.Printf("creating image %q...", opts.ImageName)
-	if err := h.CreateImage(insName, attachedDiskName, opts.ImageName); err != nil {
+	if err := h.CreateImageWithLabels(insName, attachedDiskName, opts.ImageName, opts.Labels); err != nil {
 		return fmt.Errorf("failed to create image: %w", err)
 	}
 	log.Println("image created")

@@ -37,5 +37,8 @@ var LoadCuttlefishContainerImage string
 //go:embed install_kernel_main.sh
 var InstallKernelMain string
 
+//go:embed select_default_kernel.sh
+var SelectDefaultKernel string
+
 //go:embed validate_cuttlefish_image.sh
 var ValidateCuttlefishImage string

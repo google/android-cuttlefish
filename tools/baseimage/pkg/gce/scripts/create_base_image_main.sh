@@ -16,9 +16,56 @@
 
 set -o errexit -o nounset -o pipefail
 
-arch=$(uname -m)
-[ "${arch}" = "x86_64" ] && arch=amd64
-[ "${arch}" = "aarch64" ] && arch=arm64
+# Configures /mnt/image as a Cuttlefish GCE base image and installs the
+# requested NVIDIA Tesla driver.
+#
+# Usage:
+#   create_base_image_main.sh --nvidia-version <ver> [--runfile-url <url>]
+
+die() {
+  echo "ERROR: $*" >&2
+  exit 1
+}
+
+host_arch=$(uname -m)
+case "${host_arch}" in
+  x86_64) arch="amd64" ;;
+  aarch64) arch="arm64" ;;
+  *) die "Unsupported architecture: ${host_arch} (expected x86_64 or aarch64)" ;;
+esac
+
+nvidia_version=""
+runfile_url=""
+
+while [[ $# -gt 0 ]]; do
+  case "$1" in
+    --nvidia-version)
+      nvidia_version=${2:-}
+      shift 2 || die "$1 requires a value"
+      ;;
+    --runfile-url)
+      runfile_url=${2:-}
+      shift 2 || die "$1 requires a value"
+      ;;
+    *)
+      die "Unknown argument: $1"
+      ;;
+  esac
+done
+
+# Validate arguments and prerequisites upfront before running apt-get.
+if [[ ! "${nvidia_version}" =~ ^[0-9]+[.][0-9]+([.][0-9]+)?$ ]]; then
+  die "Invalid or missing --nvidia-version: ${nvidia_version:-<empty>} (expected e.g. 580.196.11)"
+fi
+if [[ -n "${runfile_url}" && ! "${runfile_url}" =~ ^https://[^[:space:]]+$ ]]; then
+  die "Invalid --runfile-url: ${runfile_url} (expected https:// URL without whitespace)"
+fi
+if [[ ! -f "./install_nvidia.sh" ]]; then
+  die "Required helper script ./install_nvidia.sh not found"
+fi
+if [[ ! -d "/mnt/image" ]]; then
+  die "Target image mount point /mnt/image does not exist"
+fi
 
 sudo apt-get update
 sudo apt-get upgrade -y
@@ -99,9 +146,13 @@ if [[ -n "${edk2_pkgs}" ]]; then
   sudo chroot /mnt/image /usr/bin/apt-get purge -y ${edk2_pkgs}
 fi
 
-# Install GPU driver dependencies
+# Install GPU driver dependencies.
+nvidia_args=(--nvidia-version "${nvidia_version}")
+if [[ -n "${runfile_url}" ]]; then
+  nvidia_args+=(--runfile-url "${runfile_url}")
+fi
 sudo cp install_nvidia.sh /mnt/image/
-sudo chroot /mnt/image /usr/bin/bash install_nvidia.sh
+sudo chroot /mnt/image /usr/bin/bash install_nvidia.sh "${nvidia_args[@]}"
 sudo rm /mnt/image/install_nvidia.sh
 
 # GPU support for containers.
