@@ -1,0 +1,18 @@
+name: 'Validate bazel 7 readiness'
+runs:
+  using: "composite"
+  steps:
+  - name: Install dependencies
+    run: |
+      DEBIAN_FRONTEND=noninteractive apt-get update -y
+      DEBIAN_FRONTEND=noninteractive apt-get install -y --no-install-recommends \
+        bazel-bootstrap \
+        bazel-rules-shell \
+        dpkg-dev \
+        python3 \
+        python3-googleapis-common-protos
+    shell: bash
+  - name: Test whether package can build
+    run: |
+      ./tools/testutils/bazel-7-readiness/run_bazel_7_readiness_test.sh
+    shell: bash
