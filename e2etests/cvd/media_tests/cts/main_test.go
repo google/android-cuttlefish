@@ -44,6 +44,7 @@ func TestEmulatedCamera(t *testing.T) {
 				"--include-filter=CtsCameraTestCases android.hardware.camera2.cts.CameraManagerTest",
 				"--include-filter=CtsCameraTestCases android.hardware.camera2.cts.CaptureResultTest",
 				"--include-filter=CtsCameraTestCases android.hardware.camera2.cts.FastBasicsTest",
+				"--include-filter=CtsCameraTestCases android.hardware.camera2.cts.RecordingTest",
 			},
 		})
 }
