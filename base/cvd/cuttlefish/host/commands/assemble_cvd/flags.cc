@@ -379,6 +379,16 @@ std::optional<std::string> InstancesUdsDir() {
   return instances_uds_dir;
 }
 
+template <typename T, typename U>
+T FlagOrGuestDefault(const char* flag_name, const U& flag_value,
+                     const std::optional<T>& guest_default) {
+  if (guest_default.has_value() &&
+      gflags::GetCommandLineFlagInfoOrDie(flag_name).is_default) {
+    return *guest_default;
+  }
+  return static_cast<T>(flag_value);
+}
+
 }  // namespace
 
 Result<CuttlefishConfig> InitializeCuttlefishConfiguration(
@@ -1050,7 +1060,13 @@ Result<CuttlefishConfig> InitializeCuttlefishConfiguration(
       display_configs = *binding_displays_configs;
     }
 
-    if (x_res_vec[instance_index] > 0 && y_res_vec[instance_index] > 0) {
+    const bool explicit_xy_res =
+        !gflags::GetCommandLineFlagInfoOrDie("x_res").is_default ||
+        !gflags::GetCommandLineFlagInfoOrDie("y_res").is_default;
+    if (display_configs.empty() && !explicit_xy_res &&
+        !guest_configs[instance_index].displays.empty()) {
+      display_configs = guest_configs[instance_index].displays;
+    } else if (x_res_vec[instance_index] > 0 && y_res_vec[instance_index] > 0) {
       if (display_configs.empty()) {
         display_configs.push_back({
             .width = x_res_vec[instance_index],
@@ -1071,10 +1087,19 @@ Result<CuttlefishConfig> InitializeCuttlefishConfiguration(
     CF_EXPECT_EQ(touchpad_configs_bindings.size(), 1,
                  "Expected a single binding?");
     auto touchpad_configs = touchpad_configs_bindings[0]->GetConfigs();
+    if (touchpad_configs.empty() &&
+        !guest_configs[instance_index].touchpads.empty()) {
+      touchpad_configs = guest_configs[instance_index].touchpads;
+    }
     instance.set_touchpad_configs(touchpad_configs);
 
-    instance.set_memory_mb(memory_mb_values.ForIndex(instance_index));
-    instance.set_ddr_mem_mb(memory_mb_values.ForIndex(instance_index) * 1.2);
+    const int memory_mb =
+        memory_mb_values.IsDefault() &&
+                guest_configs[instance_index].memory_mb.has_value()
+            ? *guest_configs[instance_index].memory_mb
+            : memory_mb_values.ForIndex(instance_index);
+    instance.set_memory_mb(memory_mb);
+    instance.set_ddr_mem_mb(memory_mb * 1.2);
     CF_EXPECT(
         instance.set_setupwizard_mode(setupwizard_mode_vec[instance_index]));
     instance.set_userdata_format(userdata_format_vec[instance_index]);
@@ -1166,8 +1191,10 @@ Result<CuttlefishConfig> InitializeCuttlefishConfiguration(
     instance.set_adb_ip_and_port("0.0.0.0:" + std::to_string(6520 + num - 1));
     instance.set_fastboot_host_port(const_instance.adb_host_port());
 
-    instance.set_enable_vhal_proxy_server(
-        enable_vhal_proxy_server_vec[instance_index]);
+    instance.set_enable_vhal_proxy_server(FlagOrGuestDefault(
+        "enable_vhal_proxy_server",
+        enable_vhal_proxy_server_vec[instance_index],
+        guest_configs[instance_index].vhal_proxy_server_enabled));
     instance.set_vhal_proxy_server_port(
         cuttlefish::vhal_proxy_server::kDefaultEthPort + num - 1);
     instance.set_virtual_tuner_server_port(7000 + num - 1);
@@ -1341,9 +1368,10 @@ Result<CuttlefishConfig> InitializeCuttlefishConfiguration(
       virtual_disk_paths.push_back(path);
     }
 
-    instance.set_use_sdcard(use_sdcard_vec[instance_index]);
-
-    bool sdcard = use_sdcard_vec[instance_index];
+    const bool sdcard =
+        FlagOrGuestDefault("use_sdcard", use_sdcard_vec[instance_index],
+                           guest_configs[instance_index].use_sdcard);
+    instance.set_use_sdcard(sdcard);
     if (sdcard) {
       if (VmManagerIsQemu(tmp_config_obj) &&
           !const_instance.vhost_user_block()) {

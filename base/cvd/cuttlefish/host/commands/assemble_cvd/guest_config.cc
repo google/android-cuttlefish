@@ -49,6 +49,7 @@
 #include "cuttlefish/host/commands/assemble_cvd/flags/system_image_dir.h"
 #include "cuttlefish/host/commands/assemble_cvd/proto/guest_config.pb.h"
 #include "cuttlefish/host/libs/config/config_utils.h"
+#include "cuttlefish/host/libs/config/cuttlefish_config.h"
 #include "cuttlefish/host/libs/config/display.h"
 #include "cuttlefish/host/libs/config/gpu_mode.h"
 #include "cuttlefish/pretty/optional.h"  // IWYU pragma: keep: overloads
@@ -80,6 +81,8 @@ const std::unordered_map<config::GpuMode, GpuMode>& GetGpuModeMap() {
       };
   return *kGpuModeMap;
 }
+
+}  // namespace
 
 Result<void> ParseGuestConfigTextProto(const std::string& guest_config_path,
                                        GuestConfig& guest_config) {
@@ -150,6 +153,22 @@ Result<void> ParseGuestConfigTextProto(const std::string& guest_config_path,
     guest_config.has_vulkan_venus_apex =
         graphics_config.vulkan_venus_apex_supported();
   }
+  for (const auto& display : graphics_config.displays()) {
+    CF_EXPECT(display.width() > 0 && display.height() > 0,
+              "Guest config display width and height must be positive");
+    const int dpi = display.has_dpi() ? display.dpi() : 320;
+    const int refresh_rate_hz =
+        display.has_refresh_rate_hz() ? display.refresh_rate_hz() : 60;
+    CF_EXPECT(dpi > 0, "Guest config display dpi must be positive");
+    CF_EXPECT(refresh_rate_hz > 0,
+              "Guest config display refresh_rate_hz must be positive");
+    guest_config.displays.push_back(CuttlefishConfig::DisplayConfig{
+        .width = display.width(),
+        .height = display.height(),
+        .dpi = dpi,
+        .refresh_rate_hz = refresh_rate_hz,
+    });
+  }
 
   const auto& input_config = proto_config.input();
   if (input_config.has_mouse_supported()) {
@@ -166,6 +185,29 @@ Result<void> ParseGuestConfigTextProto(const std::string& guest_config_path,
     guest_config.domkey_mapping_config =
         DefaultHostArtifactsPath(input_config.domkey_mapping_config());
   }
+  for (const auto& touchpad : input_config.touchpads()) {
+    CF_EXPECT(touchpad.width() > 0 && touchpad.height() > 0,
+              "Guest config touchpad width and height must be positive");
+    CuttlefishConfig::TouchpadConfig::Type type =
+        CuttlefishConfig::TouchpadConfig::Type::kTouchpad;
+    switch (touchpad.type()) {
+      case config::Input::TOUCHPAD_TYPE_UNSPECIFIED:
+      case config::Input::TOUCHPAD_TYPE_TOUCHPAD:
+        type = CuttlefishConfig::TouchpadConfig::Type::kTouchpad;
+        break;
+      case config::Input::TOUCHPAD_TYPE_TOUCH_NAVIGATION:
+        type = CuttlefishConfig::TouchpadConfig::Type::kTouchNavigation;
+        break;
+      default:
+        return CF_ERRF("Unknown guest config touchpad type: {}",
+                       static_cast<int>(touchpad.type()));
+    }
+    guest_config.touchpads.push_back(CuttlefishConfig::TouchpadConfig{
+        .width = touchpad.width(),
+        .height = touchpad.height(),
+        .type = type,
+    });
+  }
 
   if (proto_config.has_audio()) {
     guest_config.audio_settings = proto_config.audio();
@@ -181,6 +223,9 @@ Result<void> ParseGuestConfigTextProto(const std::string& guest_config_path,
   if (storage_config.has_blank_data_image_mb()) {
     guest_config.blank_data_image_mb = storage_config.blank_data_image_mb();
   }
+  if (storage_config.has_use_sdcard()) {
+    guest_config.use_sdcard = storage_config.use_sdcard();
+  }
 
   const auto& virtualization_config = proto_config.virtualization();
   if (virtualization_config.has_vhost_user_vsock()) {
@@ -189,13 +234,26 @@ Result<void> ParseGuestConfigTextProto(const std::string& guest_config_path,
   if (virtualization_config.has_ti50_emulator_path()) {
     guest_config.ti50_emulator = virtualization_config.ti50_emulator_path();
   }
+  if (virtualization_config.has_memory_mb()) {
+    CF_EXPECT(virtualization_config.memory_mb() > 0,
+              "Guest config memory_mb must be positive");
+    guest_config.memory_mb = virtualization_config.memory_mb();
+  }
 
   // Unlike with android-info.txt, this defaults to false if not provided in the
   // proto file.
   guest_config.lights_server_enabled = proto_config.has_lights();
 
+  const auto& services_config = proto_config.services();
+  if (services_config.has_vhal_proxy_server_enabled()) {
+    guest_config.vhal_proxy_server_enabled =
+        services_config.vhal_proxy_server_enabled();
+  }
+
   return {};
 }
+
+namespace {
 
 Result<std::string> MapGetResult(
     const std::map<std::string, std::string, std::less<void>> android_info,
@@ -330,7 +388,10 @@ PrettyStruct Pretty(const GuestConfig& config, PrettyAdlPlaceholder) {
       .Member("audio_settings", config.audio_settings)
       .Member("enforce_mac80211_hwsim", config.enforce_mac80211_hwsim)
       .Member("blank_data_image_mb", config.blank_data_image_mb)
-      .Member("lights_server_enabled", config.lights_server_enabled);
+      .Member("lights_server_enabled", config.lights_server_enabled)
+      .Member("use_sdcard", config.use_sdcard)
+      .Member("memory_mb", config.memory_mb)
+      .Member("vhal_proxy_server_enabled", config.vhal_proxy_server_enabled);
 }
 
 Result<std::vector<GuestConfig>> ReadGuestConfig(
