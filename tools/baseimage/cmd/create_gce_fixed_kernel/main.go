@@ -55,7 +55,7 @@ func init() {
 	flag.StringVar(&zone, "zone", "us-central1-a", "GCP zone used for creating relevant resources")
 	flag.Var(&arch, "arch", "architecture of GCE image. Supports either x86_64 or arm64")
 	flag.IntVar(&debianVersion, "debian-version", 13, "Debian version: https://www.debian.org/releases")
-	flag.StringVar(&linuxImageDeb, "linux-image-deb", "", "linux-image-* package name. E.g. linux-image-6.1.0-40-cloud-amd64")
+	flag.StringVar(&linuxImageDeb, "linux-image-deb", "", "linux-image-* package name. E.g. linux-image-6.1.0-40-cloud-amd64. Defaults to the newest kernel, backports included, that the NVIDIA driver builds against")
 	flag.StringVar(&imageName, "image-name", "", "output GCE image name")
 }
 
@@ -70,9 +70,6 @@ func main() {
 	}
 	if zone == "" {
 		log.Fatal("usage: `-zone` must not be empty")
-	}
-	if linuxImageDeb == "" {
-		log.Fatal("usage: `-linux-image-deb` must not be empty")
 	}
 	if imageName == "" {
 		log.Fatal("usage: `-image-name` must not be empty")
@@ -116,6 +113,14 @@ func main() {
 		SourceImage:        sourceImage,
 		ImageName:          imageName,
 		ModifyFunc: func(project, zone, insName string) error {
+			if linuxImageDeb == "" {
+				if err := gce.UploadBashScript(project, zone, insName, "install_nvidia.sh", scripts.InstallNvidia); err != nil {
+					return fmt.Errorf("error uploading script: %v", err)
+				}
+				if err := gce.UploadBashScript(project, zone, insName, "select_default_kernel.sh", scripts.SelectDefaultKernel); err != nil {
+					return fmt.Errorf("error uploading script: %v", err)
+				}
+			}
 			if err := gce.UploadBashScript(project, zone, insName, "install_kernel_main.sh", scripts.InstallKernelMain); err != nil {
 				return fmt.Errorf("error uploading script: %v", err)
 			}
