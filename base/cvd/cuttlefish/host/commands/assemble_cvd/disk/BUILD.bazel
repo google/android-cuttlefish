@@ -35,6 +35,7 @@ cf_cc_library(
         "//cuttlefish/host/libs/image_aggregator:gpt_type_guid",
         "//cuttlefish/host/libs/image_aggregator:super_builder",
         "//cuttlefish/result",
+        "@abseil-cpp//absl/log",
         "@abseil-cpp//absl/strings",
         "@abseil-cpp//absl/strings:string_view",
     ],
