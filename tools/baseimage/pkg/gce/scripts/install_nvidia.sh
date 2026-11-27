@@ -14,18 +14,27 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-set -x
-set -o errexit
+set -o errexit -o nounset -o pipefail
 
-arch=$(uname -m)
-nvidia_arch=${arch}
-[ "${arch}" = "x86_64" ] && arch=amd64
-[ "${arch}" = "aarch64" ] && arch=arm64
+die() {
+  echo "ERROR: $*" >&2
+  exit 1
+}
 
-# NVIDIA driver needs dkms which requires /dev/fd
-if [ ! -d /dev/fd ]; then
-  ln -s /proc/self/fd /dev/fd
-fi
+nvidia_arch=$(uname -m)
+case "${nvidia_arch}" in
+  x86_64)
+    arch="amd64"
+    other_arch="arm64"
+    ;;
+  aarch64)
+    arch="arm64"
+    other_arch="amd64"
+    ;;
+  *)
+    die "Unsupported architecture: ${nvidia_arch} (expected x86_64 or aarch64)"
+    ;;
+esac
 
 # usage: $0 [--check <kernel version>]
 #
@@ -35,13 +44,35 @@ fi
 # given kernel version (e.g. 6.12.118+deb13-cloud-amd64) and exits. The driver
 # is not installed.
 check_only=false
-if [[ "${1:-}" == "--check" ]]; then
+kmodver=""
+if [[ $# -gt 0 ]]; then
+  if [[ "$1" != "--check" || $# -ne 2 ]]; then
+    die "Usage: $0 [--check <kernel-version>]"
+  fi
   check_only=true
   kmodver=$2
-else
+  if [[ ! "${kmodver}" =~ ^[0-9]+[.][0-9]+[.][0-9]+ ]]; then
+    die "Invalid --check kernel version: ${kmodver}"
+  fi
+  if [[ "${kmodver}" == *"-${other_arch}" ]]; then
+    die "Kernel version ${kmodver} targets ${other_arch} on a ${arch} host"
+  fi
+fi
+
+set -x
+
+# NVIDIA driver needs dkms which requires /dev/fd
+if [ ! -d /dev/fd ]; then
+  ln -s /proc/self/fd /dev/fd
+fi
+
+if [[ "${check_only}" == "false" ]]; then
   # Query the installed concrete kernel package version on disk rather than the metapackage
   kmodver=$(dpkg -l | grep '^ii' | awk '{print $2}' | \
             grep '^linux-image-[0-9]' | head -n1 | sed 's/linux-image-//')
+  if [[ -z "${kmodver}" ]]; then
+    die "No installed concrete linux-image-* kernel package found"
+  fi
 fi
 
 apt-get install -y wget
@@ -92,11 +123,17 @@ arch_specific_flags=""
 if [[ "${nvidia_arch}" = "x86_64" ]]; then
   arch_specific_flags="--no-install-compat32-libs"
 fi
-NVIDIA-Linux-${nvidia_arch}-${nvidia_version}/nvidia-installer \
-  ${arch_specific_flags} \
-  --silent \
-  --no-backup \
-  --no-wine-files \
-  --install-libglvnd \
-  --dkms \
-  -k "${kmodver}"
+# nvidia-installer looks up bundled files relative to $PWD.
+(
+  cd "${nvidia_installer_dir}"
+  ./nvidia-installer \
+    ${arch_specific_flags} \
+    --silent \
+    --no-backup \
+    --no-wine-files \
+    --install-libglvnd \
+    --dkms \
+    -k "${kmodver}"
+)
+
+rm -rf "${nvidia_installer_dir}" "${nvidia_installer_dir}.run"

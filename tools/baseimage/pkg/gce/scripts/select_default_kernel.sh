@@ -20,9 +20,27 @@ set -o errexit -o nounset -o pipefail
 # included) that the NVIDIA driver builds against. Logs go to stderr so stdout
 # only contains the chosen package name.
 
-arch=$(uname -m)
-[ "${arch}" = "x86_64" ] && arch=amd64
-[ "${arch}" = "aarch64" ] && arch=arm64
+die() {
+  echo "ERROR: $*" >&2
+  exit 1
+}
+
+host_arch=$(uname -m)
+case "${host_arch}" in
+  x86_64) arch="amd64" ;;
+  aarch64) arch="arm64" ;;
+  *) die "Unsupported architecture: ${host_arch} (expected x86_64 or aarch64)" ;;
+esac
+
+if [[ $# -gt 0 ]]; then
+  die "Unknown argument: $1"
+fi
+if [[ ! -f "./install_nvidia.sh" ]]; then
+  die "Required helper script ./install_nvidia.sh not found"
+fi
+if [[ ! -d "/mnt/image" ]]; then
+  die "Target image mount point /mnt/image does not exist"
+fi
 
 list_installed_packages() {
   sudo chroot /mnt/image /usr/bin/dpkg -l \

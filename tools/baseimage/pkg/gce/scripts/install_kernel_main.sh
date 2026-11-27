@@ -17,11 +17,47 @@
 set -o errexit -o nounset -o pipefail
 
 # usage: $0 [<linux-image-deb>]
+die() {
+  echo "ERROR: $*" >&2
+  exit 1
+}
+
+host_arch=$(uname -m)
+case "${host_arch}" in
+  x86_64)
+    arch="amd64"
+    other_arch="arm64"
+    ;;
+  aarch64)
+    arch="arm64"
+    other_arch="amd64"
+    ;;
+  *)
+    die "Unsupported architecture: ${host_arch} (expected x86_64 or aarch64)"
+    ;;
+esac
+
+if [[ $# -gt 1 ]]; then
+  die "Usage: $0 [<linux-image-deb>]"
+fi
 linux_image_deb=${1:-}
 
-arch=$(uname -m)
-[ "${arch}" = "x86_64" ] && arch=amd64
-[ "${arch}" = "aarch64" ] && arch=arm64
+# Validate arguments and prerequisites upfront before running apt-get.
+if [[ ! -d "/mnt/image" ]]; then
+  die "Target image mount point /mnt/image does not exist"
+fi
+if [[ -n "${linux_image_deb}" ]]; then
+  if [[ ! "${linux_image_deb}" =~ ^linux-image-[0-9]+[.][0-9]+[.][0-9]+[a-zA-Z0-9.+~-]*$ ]]; then
+    die "Invalid linux-image-deb: ${linux_image_deb}"
+  fi
+  if [[ "${linux_image_deb}" == *"-${other_arch}" ]]; then
+    die "Kernel package ${linux_image_deb} targets ${other_arch} on a ${arch} host"
+  fi
+else
+  if [[ ! -x "./select_default_kernel.sh" || ! -f "./install_nvidia.sh" ]]; then
+    die "Required helper scripts ./select_default_kernel.sh and ./install_nvidia.sh must exist"
+  fi
+fi
 
 sudo apt-get update
 sudo apt-get upgrade -y
