@@ -12,6 +12,17 @@ cf_build_test(name = "casimir_control_server_test")
 cf_cc_binary(
     name = "casimir_control_server",
     srcs = ["main.cpp"],
+    dynamic_deps = select({
+        "@platforms//os:linux": [
+            "//:absl_shared",
+            "//:boringssl_shared",
+            "//:fmt_shared",
+            "//:grpc_protobuf_shared",
+            "//cuttlefish/common/libs/fs:fs_shared",
+            "//cuttlefish/result:result_shared",
+        ],
+        "//conditions:default": [],
+    }),
     deps = [
         "//cuttlefish/host/commands/casimir_control_server:casimir_control_server_cc_proto",
         "//cuttlefish/host/commands/casimir_control_server:casimir_controller",

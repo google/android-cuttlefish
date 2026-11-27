@@ -91,6 +91,20 @@ cf_cc_library(
 cf_cc_binary(
     name = "run_cvd",
     srcs = ["main.cc"],
+    dynamic_deps = select({
+        "@platforms//os:linux": [
+            "//:absl_shared",
+            "//:boringssl_shared",
+            "//:fmt_shared",
+            "//:grpc_protobuf_shared",
+            "//:jsoncpp_shared",
+            "//cuttlefish/common/libs/fs:fs_shared",
+            "//cuttlefish/common/libs/utils:files_shared",
+            "//cuttlefish/host/libs/config:cuttlefish_config_shared",
+            "//cuttlefish/result:result_shared",
+        ],
+        "//conditions:default": [],
+    }),
     deps = [
         "//cuttlefish/common/libs/utils:files",
         "//cuttlefish/common/libs/utils:tee_logging",

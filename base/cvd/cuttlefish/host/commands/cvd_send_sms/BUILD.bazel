@@ -9,6 +9,15 @@ cf_build_test(name = "cvd_send_sms_build_test")
 cf_cc_binary(
     name = "cvd_send_sms",
     srcs = ["main.cc"],
+    dynamic_deps = select({
+        "@platforms//os:linux": [
+            "//:absl_shared",
+            "//:fmt_shared",
+            "//cuttlefish/common/libs/fs:fs_shared",
+            "//cuttlefish/result:result_shared",
+        ],
+        "//conditions:default": [],
+    }),
     deps = [
         "//cuttlefish/common/libs/fs",
         "//cuttlefish/host/commands/cvd_send_sms:sms_sender",
