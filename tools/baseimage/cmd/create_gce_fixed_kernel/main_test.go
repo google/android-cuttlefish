@@ -55,6 +55,7 @@ func TestValidateFlags(t *testing.T) {
 		{name: "explicit_debian12", args: []string{"-project=p", "-arch=arm64", "-debian-version=12", "-image-name=img"}},
 		{name: "explicit_kernel", args: []string{"-project=p", "-arch=x86_64", "-linux-image-deb=linux-image-6.12.118+deb13-cloud-amd64", "-image-name=img"}},
 		{name: "unsupported_debian", args: []string{"-project=p", "-arch=x86_64", "-debian-version=11", "-image-name=img"}, wantErr: true},
+		{name: "kernel_and_nvidia_conflict", args: []string{"-project=p", "-arch=x86_64", "-linux-image-deb=linux-image-6.12.118+deb13-cloud-amd64", "-nvidia-version=580.196.11", "-image-name=img"}, wantErr: true},
 		{name: "kernel_arch_mismatch", args: []string{"-project=p", "-arch=arm64", "-linux-image-deb=linux-image-6.12.118+deb13-cloud-amd64", "-image-name=img"}, wantErr: true},
 	}
 	for _, tc := range tests {
@@ -65,7 +66,7 @@ func TestValidateFlags(t *testing.T) {
 			if err := fs.Parse(tc.args); err != nil {
 				t.Fatalf("fs.Parse(%v) failed: %v", tc.args, err)
 			}
-			if err := validateFlags(); (err != nil) != tc.wantErr {
+			if err := validateFlags(fs); (err != nil) != tc.wantErr {
 				t.Errorf("validateFlags(%v) err = %v, wantErr = %v", tc.args, err, tc.wantErr)
 			}
 		})

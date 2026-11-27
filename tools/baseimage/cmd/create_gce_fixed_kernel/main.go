@@ -15,6 +15,7 @@
 package main
 
 import (
+	"context"
 	"errors"
 	"flag"
 	"fmt"
@@ -27,6 +28,7 @@ import (
 	"github.com/google/android-cuttlefish/tools/baseimage/pkg/cli"
 	"github.com/google/android-cuttlefish/tools/baseimage/pkg/gce"
 	"github.com/google/android-cuttlefish/tools/baseimage/pkg/gce/scripts"
+	"github.com/google/android-cuttlefish/tools/baseimage/pkg/nvidia"
 )
 
 // Cuttlefish base images are based on debian images.
@@ -53,6 +55,7 @@ var (
 	debianVersion int
 	linuxImageDeb string
 	imageName     string
+	nvidiaFlags   cli.NvidiaFlags
 )
 
 func registerFlags(fs *flag.FlagSet) {
@@ -60,15 +63,16 @@ func registerFlags(fs *flag.FlagSet) {
 	fs.StringVar(&zone, "zone", "us-central1-a", "GCP zone used for creating relevant resources")
 	fs.Var(&arch, "arch", "architecture of GCE image. Supports either x86_64 or arm64")
 	fs.IntVar(&debianVersion, "debian-version", 13, "Debian version: https://www.debian.org/releases")
-	fs.StringVar(&linuxImageDeb, "linux-image-deb", "", "linux-image-* package name. E.g. linux-image-6.1.0-40-cloud-amd64. Defaults to the newest kernel, backports included, that the NVIDIA driver builds against")
+	fs.StringVar(&linuxImageDeb, "linux-image-deb", "", "linux-image-* package name. E.g. linux-image-6.1.0-40-cloud-amd64. Defaults to the newest kernel, backports included, that the resolved NVIDIA driver builds against")
 	fs.StringVar(&imageName, "image-name", "", "output GCE image name")
+	nvidiaFlags.Register(fs)
 }
 
 func init() {
 	registerFlags(flag.CommandLine)
 }
 
-func validateFlags() error {
+func validateFlags(fs *flag.FlagSet) error {
 	if arch.String() == "" {
 		return errors.New("usage: `-arch` must not be empty")
 	}
@@ -93,6 +97,9 @@ func validateFlags() error {
 		if err := validateLinuxImageDeb(linuxImageDeb, arch.GceArch()); err != nil {
 			return err
 		}
+		if nvidiaFlags.AnyExplicit(fs) {
+			return errors.New("`-nvidia-*` flags cannot be combined with `-linux-image-deb` in create_gce_fixed_kernel; pass them to create_gce_base_image instead")
+		}
 	}
 	return nil
 }
@@ -114,10 +121,28 @@ func validateLinuxImageDeb(pkg string, targetArch gce.Arch) error {
 	return nil
 }
 
+func shellQuote(s string) string {
+	return "'" + strings.ReplaceAll(s, "'", "'\"'\"'") + "'"
+}
+
 func main() {
 	flag.Parse()
-	if err := validateFlags(); err != nil {
+	if err := validateFlags(flag.CommandLine); err != nil {
 		log.Fatal(err)
+	}
+
+	var resolvedDriver *nvidia.Driver
+	if linuxImageDeb == "" {
+		nvidiaOpts, err := nvidiaFlags.ToResolveOpts(flag.CommandLine, arch.GceArch())
+		if err != nil {
+			log.Fatal(err)
+		}
+		resolvedDriver, err = nvidia.NewClient().Resolve(context.Background(), nvidiaOpts)
+		if err != nil {
+			log.Fatalf("resolving NVIDIA driver: %v", err)
+		}
+		log.Printf("resolved NVIDIA driver: version=%s branch=%s",
+			resolvedDriver.Version, resolvedDriver.Branch)
 	}
 
 	h, err := gce.NewGceHelper(project, zone)
@@ -145,7 +170,9 @@ func main() {
 		SourceImageProject: debianSourceImageProject,
 		SourceImage:        sourceImage,
 		ImageName:          imageName,
+		Labels:             cli.NvidiaLabels(resolvedDriver),
 		ModifyFunc: func(project, zone, insName string) error {
+			var args []string
 			if linuxImageDeb == "" {
 				if err := gce.UploadBashScript(project, zone, insName, "install_nvidia.sh", scripts.InstallNvidia); err != nil {
 					return fmt.Errorf("error uploading script: %v", err)
@@ -153,11 +180,17 @@ func main() {
 				if err := gce.UploadBashScript(project, zone, insName, "select_default_kernel.sh", scripts.SelectDefaultKernel); err != nil {
 					return fmt.Errorf("error uploading script: %v", err)
 				}
+				args = []string{
+					"--nvidia-version", shellQuote(resolvedDriver.Version),
+					"--runfile-url", shellQuote(resolvedDriver.RunfileURL),
+				}
+			} else {
+				args = []string{"--linux-image-deb", shellQuote(linuxImageDeb)}
 			}
 			if err := gce.UploadBashScript(project, zone, insName, "install_kernel_main.sh", scripts.InstallKernelMain); err != nil {
 				return fmt.Errorf("error uploading script: %v", err)
 			}
-			return gce.RunCmd(project, zone, insName, "./install_kernel_main.sh "+linuxImageDeb)
+			return gce.RunCmd(project, zone, insName, "./install_kernel_main.sh "+strings.Join(args, " "))
 		},
 	}
 

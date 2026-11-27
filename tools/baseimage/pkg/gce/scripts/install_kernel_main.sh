@@ -16,7 +16,10 @@
 
 set -o errexit -o nounset -o pipefail
 
-# usage: $0 [<linux-image-deb>]
+# Usage:
+#   install_kernel_main.sh --linux-image-deb <pkg>
+#   install_kernel_main.sh --nvidia-version <ver> [--runfile-url <url>]
+
 die() {
   echo "ERROR: $*" >&2
   exit 1
@@ -37,23 +40,51 @@ case "${host_arch}" in
     ;;
 esac
 
-if [[ $# -gt 1 ]]; then
-  die "Usage: $0 [<linux-image-deb>]"
-fi
-linux_image_deb=${1:-}
+linux_image_deb=""
+nvidia_version=""
+runfile_url=""
 
-# Validate arguments and prerequisites upfront before running apt-get.
+while [[ $# -gt 0 ]]; do
+  case "$1" in
+    --linux-image-deb)
+      linux_image_deb=${2:-}
+      shift 2 || die "$1 requires a value"
+      ;;
+    --nvidia-version)
+      nvidia_version=${2:-}
+      shift 2 || die "$1 requires a value"
+      ;;
+    --runfile-url)
+      runfile_url=${2:-}
+      shift 2 || die "$1 requires a value"
+      ;;
+    *)
+      die "Unknown argument: $1"
+      ;;
+  esac
+done
+
+# Validate arguments and combinations upfront before running apt-get.
 if [[ ! -d "/mnt/image" ]]; then
   die "Target image mount point /mnt/image does not exist"
 fi
 if [[ -n "${linux_image_deb}" ]]; then
+  if [[ -n "${nvidia_version}" || -n "${runfile_url}" ]]; then
+    die "--linux-image-deb cannot be combined with --nvidia-version or --runfile-url"
+  fi
   if [[ ! "${linux_image_deb}" =~ ^linux-image-[0-9]+[.][0-9]+[.][0-9]+[a-zA-Z0-9.+~-]*$ ]]; then
-    die "Invalid linux-image-deb: ${linux_image_deb}"
+    die "Invalid --linux-image-deb: ${linux_image_deb}"
   fi
   if [[ "${linux_image_deb}" == *"-${other_arch}" ]]; then
-    die "Kernel package ${linux_image_deb} targets ${other_arch} on a ${arch} host"
+    die "--linux-image-deb ${linux_image_deb} targets ${other_arch} on a ${arch} host"
   fi
 else
+  if [[ ! "${nvidia_version}" =~ ^[0-9]+[.][0-9]+([.][0-9]+)?$ ]]; then
+    die "Invalid or missing --nvidia-version: ${nvidia_version:-<empty>} (or pass --linux-image-deb)"
+  fi
+  if [[ -n "${runfile_url}" && ! "${runfile_url}" =~ ^https://[^[:space:]]+$ ]]; then
+    die "Invalid --runfile-url: ${runfile_url}"
+  fi
   if [[ ! -x "./select_default_kernel.sh" || ! -f "./install_nvidia.sh" ]]; then
     die "Required helper scripts ./select_default_kernel.sh and ./install_nvidia.sh must exist"
   fi
@@ -107,7 +138,11 @@ apt_suite_of_version() {
 }
 
 if [[ -z "${linux_image_deb}" ]]; then
-  linux_image_deb=$(./select_default_kernel.sh)
+  select_args=(--nvidia-version "${nvidia_version}")
+  if [[ -n "${runfile_url}" ]]; then
+    select_args+=(--runfile-url "${runfile_url}")
+  fi
+  linux_image_deb=$(./select_default_kernel.sh "${select_args[@]}")
   echo "DEFAULT KERNEL: ${linux_image_deb}"
 fi
 

@@ -17,8 +17,11 @@
 set -o errexit -o nounset -o pipefail
 
 # Prints the newest concrete cloud kernel package in /mnt/image (backports
-# included) that the NVIDIA driver builds against. Logs go to stderr so stdout
-# only contains the chosen package name.
+# included) that the requested NVIDIA driver builds against. Logs go to stderr
+# so stdout only contains the chosen package name.
+#
+# Usage:
+#   select_default_kernel.sh --nvidia-version <ver> [--runfile-url <url>]
 
 die() {
   echo "ERROR: $*" >&2
@@ -32,8 +35,31 @@ case "${host_arch}" in
   *) die "Unsupported architecture: ${host_arch} (expected x86_64 or aarch64)" ;;
 esac
 
-if [[ $# -gt 0 ]]; then
-  die "Unknown argument: $1"
+nvidia_version=""
+runfile_url=""
+
+while [[ $# -gt 0 ]]; do
+  case "$1" in
+    --nvidia-version)
+      nvidia_version=${2:-}
+      shift 2 || die "$1 requires a value"
+      ;;
+    --runfile-url)
+      runfile_url=${2:-}
+      shift 2 || die "$1 requires a value"
+      ;;
+    *)
+      die "Unknown argument: $1"
+      ;;
+  esac
+done
+
+# Validate arguments and prerequisites upfront before touching /mnt/image.
+if [[ ! "${nvidia_version}" =~ ^[0-9]+[.][0-9]+([.][0-9]+)?$ ]]; then
+  die "Invalid or missing --nvidia-version: ${nvidia_version:-<empty>} (expected e.g. 580.196.11)"
+fi
+if [[ -n "${runfile_url}" && ! "${runfile_url}" =~ ^https://[^[:space:]]+$ ]]; then
+  die "Invalid --runfile-url: ${runfile_url} (expected https:// URL without whitespace)"
 fi
 if [[ ! -f "./install_nvidia.sh" ]]; then
   die "Required helper script ./install_nvidia.sh not found"
@@ -75,7 +101,14 @@ list_kernel_packages_newest_first() {
 
 nvidia_driver_builds_on() {
   local kernel_version=$1
-  sudo chroot /mnt/image /usr/bin/bash install_nvidia.sh --check "${kernel_version}" >&2
+  local args=(
+    --nvidia-version "${nvidia_version}"
+    --check "${kernel_version}"
+  )
+  if [[ -n "${runfile_url}" ]]; then
+    args+=(--runfile-url "${runfile_url}")
+  fi
+  sudo chroot /mnt/image /usr/bin/bash install_nvidia.sh "${args[@]}" >&2
 }
 
 purge_packages_installed_since() {
@@ -100,7 +133,7 @@ for kernel_package in ${kernel_packages}; do
     selected_kernel=${kernel_package}
     break
   fi
-  echo "NVIDIA DRIVER DOES NOT BUILD ON: ${kernel_version}" >&2
+  echo "NVIDIA DRIVER ${nvidia_version} DOES NOT BUILD ON: ${kernel_version}" >&2
   sudo chroot /mnt/image /usr/bin/apt-get purge -y --autoremove "linux-headers-${kernel_version}" >&2 || true
 done
 
@@ -109,7 +142,7 @@ sudo rm -rf /mnt/image/install_nvidia.sh /mnt/image/NVIDIA-Linux-*
 
 if [[ -z "${selected_kernel}" ]]; then
   echo "CREATE IMAGE FAILED!!!" >&2
-  echo "The NVIDIA driver does not build against any available kernel" >&2
+  echo "NVIDIA driver ${nvidia_version} does not build against any available kernel" >&2
   exit 1
 fi
 

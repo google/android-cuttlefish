@@ -15,13 +15,17 @@
 package main
 
 import (
+	"context"
+	"errors"
 	"flag"
 	"fmt"
 	"log"
+	"strings"
 
 	"github.com/google/android-cuttlefish/tools/baseimage/pkg/cli"
 	"github.com/google/android-cuttlefish/tools/baseimage/pkg/gce"
 	"github.com/google/android-cuttlefish/tools/baseimage/pkg/gce/scripts"
+	"github.com/google/android-cuttlefish/tools/baseimage/pkg/nvidia"
 )
 
 // Flags
@@ -32,6 +36,7 @@ var (
 	sourceImageProject string
 	sourceImage        string
 	imageName          string
+	nvidiaFlags        cli.NvidiaFlags
 )
 
 func init() {
@@ -41,28 +46,45 @@ func init() {
 	flag.StringVar(&sourceImageProject, "source-image-project", "", "Source image GCP project")
 	flag.StringVar(&sourceImage, "source-image", "", "Source image name")
 	flag.StringVar(&imageName, "image-name", "", "output GCE image name")
+	nvidiaFlags.Register(flag.CommandLine)
+}
+
+func validateFlags() error {
+	if arch.String() == "" {
+		return errors.New("usage: `-arch` must not be empty")
+	}
+	if project == "" {
+		return errors.New("usage: `-project` must not be empty")
+	}
+	if zone == "" {
+		return errors.New("usage: `-zone` must not be empty")
+	}
+	if sourceImageProject == "" {
+		return errors.New("usage: `-source-image-project` must not be empty")
+	}
+	if sourceImage == "" {
+		return errors.New("usage: `-source-image` must not be empty")
+	}
+	if imageName == "" {
+		return errors.New("usage: `-image-name` must not be empty")
+	}
+	return nil
+}
+
+func shellQuote(s string) string {
+	return "'" + strings.ReplaceAll(s, "'", "'\"'\"'") + "'"
 }
 
 func main() {
 	flag.Parse()
+	if err := validateFlags(); err != nil {
+		log.Fatal(err)
+	}
 
-	if arch.String() == "" {
-		log.Fatal("usage: `-arch` must not be empty")
-	}
-	if project == "" {
-		log.Fatal("usage: `-project` must not be empty")
-	}
-	if zone == "" {
-		log.Fatal("usage: `-zone` must not be empty")
-	}
-	if sourceImageProject == "" {
-		log.Fatal("usage: `-source-image-project` must not be empty")
-	}
-	if sourceImage == "" {
-		log.Fatal("usage: `-source-image` must not be empty")
-	}
-	if imageName == "" {
-		log.Fatal("usage: `-image-name` must not be empty")
+	targetArch := arch.GceArch()
+	nvidiaOpts, err := nvidiaFlags.ToResolveOpts(flag.CommandLine, targetArch)
+	if err != nil {
+		log.Fatal(err)
 	}
 
 	h, err := gce.NewGceHelper(project, zone)
@@ -70,11 +92,13 @@ func main() {
 		log.Fatal(err)
 	}
 
-	if srcExists, err := h.ImageExists(sourceImageProject, sourceImage); err != nil || !srcExists {
-		if err != nil {
-			log.Fatal(err)
-		}
-		log.Fatalf("source image %q does not exist in project %q", sourceImage, sourceImageProject)
+	srcImg, err := h.Image(sourceImageProject, sourceImage)
+	if err != nil {
+		log.Fatalf("looking up source image %q in project %q: %v", sourceImage, sourceImageProject, err)
+	}
+	if !gce.ImageMatchesArch(targetArch, srcImg) {
+		log.Fatalf("source image %q has architecture %q, which does not match `-arch=%s`",
+			srcImg.Name, srcImg.Architecture, arch)
 	}
 
 	if exists, err := h.ImageExists(project, imageName); err != nil || exists {
@@ -84,11 +108,29 @@ func main() {
 		log.Fatalf("image %q already exists in project %q", imageName, project)
 	}
 
+	// Reuse the NVIDIA driver validated by create_gce_fixed_kernel when the
+	// caller did not pass any explicit -nvidia-* override flags.
+	if !nvidiaFlags.AnyExplicit(flag.CommandLine) {
+		if labelVer, ok := cli.NvidiaVersionFromLabels(srcImg.Labels); ok {
+			log.Printf("inheriting validated NVIDIA driver from source image label: version=%s", labelVer)
+			nvidiaOpts.Version = labelVer
+			nvidiaOpts.BranchExplicit = false
+		}
+	}
+
+	resolvedDriver, err := nvidia.NewClient().Resolve(context.Background(), nvidiaOpts)
+	if err != nil {
+		log.Fatalf("resolving NVIDIA driver: %v", err)
+	}
+	log.Printf("resolved NVIDIA driver: version=%s branch=%s",
+		resolvedDriver.Version, resolvedDriver.Branch)
+
 	buildImageOpts := gce.BuildImageOpts{
-		Arch:               arch.GceArch(),
+		Arch:               targetArch,
 		SourceImageProject: sourceImageProject,
-		SourceImage:        sourceImage,
+		SourceImage:        srcImg.Name,
 		ImageName:          imageName,
+		Labels:             cli.NvidiaLabels(resolvedDriver),
 		ModifyFunc: func(project, zone, insName string) error {
 			if err := gce.UploadBashScript(project, zone, insName, "install_nvidia.sh", scripts.InstallNvidia); err != nil {
 				return fmt.Errorf("error uploading script: %v", err)
@@ -96,7 +138,11 @@ func main() {
 			if err := gce.UploadBashScript(project, zone, insName, "create_base_image_main.sh", scripts.CreateBaseImageMain); err != nil {
 				return fmt.Errorf("error uploading script: %v", err)
 			}
-			return gce.RunCmd(project, zone, insName, "./create_base_image_main.sh")
+			args := []string{
+				"--nvidia-version", shellQuote(resolvedDriver.Version),
+				"--runfile-url", shellQuote(resolvedDriver.RunfileURL),
+			}
+			return gce.RunCmd(project, zone, insName, "./create_base_image_main.sh "+strings.Join(args, " "))
 		},
 	}
 

@@ -16,6 +16,12 @@
 
 set -o errexit -o nounset -o pipefail
 
+# Installs an NVIDIA Tesla driver with open kernel modules (kernel-open), or
+# checks whether its open kernel modules build against a candidate kernel.
+#
+# Usage:
+#   install_nvidia.sh --nvidia-version <ver> [--runfile-url <url>] [--check <kernel-version>]
+
 die() {
   echo "ERROR: $*" >&2
   exit 1
@@ -36,23 +42,44 @@ case "${nvidia_arch}" in
     ;;
 esac
 
-# usage: $0 [--check <kernel version>]
-#
-# Without arguments, installs the NVIDIA driver for the installed kernel.
-#
-# With --check, only tests that the driver's kernel modules build against the
-# given kernel version (e.g. 6.12.118+deb13-cloud-amd64) and exits. The driver
-# is not installed.
+nvidia_version=""
+runfile_url=""
 check_only=false
 kmodver=""
-if [[ $# -gt 0 ]]; then
-  if [[ "$1" != "--check" || $# -ne 2 ]]; then
-    die "Usage: $0 [--check <kernel-version>]"
-  fi
-  check_only=true
-  kmodver=$2
+
+while [[ $# -gt 0 ]]; do
+  case "$1" in
+    --nvidia-version)
+      nvidia_version=${2:-}
+      shift 2 || die "$1 requires a value"
+      ;;
+    --runfile-url)
+      runfile_url=${2:-}
+      shift 2 || die "$1 requires a value"
+      ;;
+    --check)
+      check_only=true
+      kmodver=${2:-}
+      shift 2 || die "$1 requires a value"
+      ;;
+    *)
+      die "Unknown argument: $1"
+      ;;
+  esac
+done
+
+# Validate arguments upfront before performing any system changes.
+if [[ ! "${nvidia_version}" =~ ^[0-9]+[.][0-9]+([.][0-9]+)?$ ]]; then
+  die "Invalid or missing --nvidia-version: ${nvidia_version:-<empty>} (expected e.g. 580.196.11)"
+fi
+if [[ -z "${runfile_url}" ]]; then
+  runfile_url="https://us.download.nvidia.com/tesla/${nvidia_version}/NVIDIA-Linux-${nvidia_arch}-${nvidia_version}.run"
+elif [[ ! "${runfile_url}" =~ ^https://[^[:space:]]+$ ]]; then
+  die "Invalid --runfile-url: ${runfile_url} (expected https:// URL without whitespace)"
+fi
+if [[ "${check_only}" == "true" ]]; then
   if [[ ! "${kmodver}" =~ ^[0-9]+[.][0-9]+[.][0-9]+ ]]; then
-    die "Invalid --check kernel version: ${kmodver}"
+    die "Invalid --check kernel version: ${kmodver:-<empty>}"
   fi
   if [[ "${kmodver}" == *"-${other_arch}" ]]; then
     die "Kernel version ${kmodver} targets ${other_arch} on a ${arch} host"
@@ -92,27 +119,22 @@ apt-get install -y ${recommends_flag} \
   libc6-dev \
   pkg-config
 
-nvidia_version=580.196.07
-nvidia_installer_dir=NVIDIA-Linux-${nvidia_arch}-${nvidia_version}
+nvidia_installer_dir="NVIDIA-Linux-${nvidia_arch}-${nvidia_version}"
+nvidia_runfile="${nvidia_installer_dir}.run"
 
 # A check runs once per candidate kernel. Download the driver only once.
 if [[ ! -d "${nvidia_installer_dir}" ]]; then
-  wget -q https://us.download.nvidia.com/tesla/${nvidia_version}/NVIDIA-Linux-${nvidia_arch}-${nvidia_version}.run
-  chmod a+x NVIDIA-Linux-${nvidia_arch}-${nvidia_version}.run
-  ./NVIDIA-Linux-${nvidia_arch}-${nvidia_version}.run -x
+  wget -q -O "${nvidia_runfile}" "${runfile_url}"
+  chmod a+x "${nvidia_runfile}"
+  "./${nvidia_runfile}" -x --target "${nvidia_installer_dir}"
+fi
+
+module_source_dir="${nvidia_installer_dir}/kernel-open"
+if [[ ! -d "${module_source_dir}" ]]; then
+  die "NVIDIA driver ${nvidia_version} does not include open kernel modules (${module_source_dir} not found)"
 fi
 
 if [[ "${check_only}" == "true" ]]; then
-  # The driver ships two sets of kernel modules: proprietary ones in "kernel"
-  # and open-source ones in "kernel-open". Build the set that nvidia-installer
-  # would install on this machine.
-  module_type=$("${nvidia_installer_dir}/nvidia-installer" --print-recommended-kernel-module-type)
-  if [[ "${module_type}" == "open" ]]; then
-    module_source_dir=${nvidia_installer_dir}/kernel-open
-  else
-    module_source_dir=${nvidia_installer_dir}/kernel
-  fi
-
   # These are the commands DKMS runs to build the modules for a kernel.
   make -C "${module_source_dir}" KERNEL_UNAME="${kmodver}" clean
   make -C "${module_source_dir}" -j"$(nproc)" KERNEL_UNAME="${kmodver}" modules
@@ -123,11 +145,13 @@ arch_specific_flags=""
 if [[ "${nvidia_arch}" = "x86_64" ]]; then
   arch_specific_flags="--no-install-compat32-libs"
 fi
+
 # nvidia-installer looks up bundled files relative to $PWD.
 (
   cd "${nvidia_installer_dir}"
   ./nvidia-installer \
     ${arch_specific_flags} \
+    --kernel-module-type=open \
     --silent \
     --no-backup \
     --no-wine-files \
@@ -136,4 +160,4 @@ fi
     -k "${kmodver}"
 )
 
-rm -rf "${nvidia_installer_dir}" "${nvidia_installer_dir}.run"
+rm -rf "${nvidia_installer_dir}" "${nvidia_runfile}"
