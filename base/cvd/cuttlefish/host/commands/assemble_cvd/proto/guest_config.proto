@@ -32,6 +32,13 @@ enum GpuMode {
 }
 
 message Graphics {
+  message Display {
+    int32 width = 1;
+    int32 height = 2;
+    int32 dpi = 3;
+    int32 refresh_rate_hz = 4;
+  }
+
   // Whether the guest supports the Gfxstream graphics driver.
   bool gfxstream_supported = 1;
 
@@ -56,6 +63,9 @@ message Graphics {
 
   // Whether the guest has a separate apex for the Venus Vulkan driver.
   bool vulkan_venus_apex_supported = 9;
+
+  // Default displays for the guest when no display flags are specified.
+  repeated Display displays = 10;
 }
 
 message Audio {
@@ -113,6 +123,18 @@ message Audio {
 }
 
 message Input {
+  enum TouchpadType {
+    TOUCHPAD_TYPE_UNSPECIFIED = 0;
+    TOUCHPAD_TYPE_TOUCHPAD = 1;
+    TOUCHPAD_TYPE_TOUCH_NAVIGATION = 2;
+  }
+
+  message Touchpad {
+    int32 width = 1;
+    int32 height = 2;
+    TouchpadType type = 3;
+  }
+
   // Indicates whether the guest has native support for a mouse.
   bool mouse_supported = 1;
 
@@ -126,6 +148,9 @@ message Input {
   // An optional path to a custom DOM key mapping file for keyboard translation.
   // The path is relative to the host artifacts directory.
   string domkey_mapping_config = 4;
+
+  // Default touchpads for the guest when no --touchpad flags are specified.
+  repeated Touchpad touchpads = 5;
 }
 
 message Network {
@@ -136,6 +161,9 @@ message Network {
 message Storage {
   // The size in megabytes for a blank userdata.img if one is not provided.
   int32 blank_data_image_mb = 1;
+
+  // Whether an SD card image is attached by default for the guest.
+  bool use_sdcard = 2;
 }
 
 message Virtualization {
@@ -145,6 +173,14 @@ message Virtualization {
 
   // An optional path to a Titan C (ti50) security chip emulator binary.
   string ti50_emulator_path = 2;
+
+  // Default RAM size in MB for the guest.
+  int32 memory_mb = 3;
+}
+
+message Services {
+  // Whether the automotive VHAL proxy server is enabled by default.
+  bool vhal_proxy_server_enabled = 1;
 }
 
 // Specifies the type of the emulated device
@@ -183,4 +219,6 @@ message GuestConfigFile {
   Virtualization virtualization = 7;
 
   Lights lights = 8;
+
+  Services services = 9;
 }

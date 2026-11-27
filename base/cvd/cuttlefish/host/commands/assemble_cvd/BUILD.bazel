@@ -495,6 +495,7 @@ cf_cc_library(
         "//cuttlefish/host/commands/assemble_cvd/flags:kernel_path",
         "//cuttlefish/host/commands/assemble_cvd/flags:system_image_dir",
         "//cuttlefish/host/libs/config:config_utils",
+        "//cuttlefish/host/libs/config:cuttlefish_config",
         "//cuttlefish/host/libs/config:display",
         "//cuttlefish/host/libs/config:gpu_mode",
         "//cuttlefish/pretty",
@@ -509,6 +510,16 @@ cf_cc_library(
         "@fmt",
         "@protobuf",
         "@protobuf//src/google/protobuf/io",
+    ],
+)
+
+cf_cc_test(
+    name = "guest_config_test",
+    srcs = ["guest_config_test.cc"],
+    deps = [
+        "//cuttlefish/host/commands/assemble_cvd:guest_config",
+        "//cuttlefish/host/libs/config:cuttlefish_config",
+        "//cuttlefish/result:result_matchers",
     ],
 )
 
