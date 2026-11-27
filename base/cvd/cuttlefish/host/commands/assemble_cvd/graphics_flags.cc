@@ -577,8 +577,9 @@ GetNeededVhostUserGpuHostRendererFeatures(
   // buffers between the vhost-user-gpu VMM process and the main VMM process.
   features.external_blob = true;
 
-  // Prebuilt SwiftShader includes VK_EXT_external_memory_host.
-  if (mode == GpuMode::GfxstreamGuestAngleHostSwiftshader) {
+  // Prebuilt SwiftShader and Lavapipe include VK_EXT_external_memory_host.
+  if (mode == GpuMode::GfxstreamGuestAngleHostSwiftshader ||
+      mode == GpuMode::GfxstreamGuestAngleHostLavapipe) {
     features.system_blob = true;
   } else {
     const bool has_external_memory_host =

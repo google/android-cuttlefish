@@ -264,6 +264,8 @@ Result<std::string> HostSwiftShaderIcdPathForArch() {
 
 Result<std::string> HostLavapipeIcdPathForArch() {
   switch (HostArch()) {
+    case Arch::Arm64:
+      return HostBinaryPath("vk_lavapipe_icd.json");
     case Arch::X86:
     case Arch::X86_64:
       return HostUsrSharePath("vulkan/icd.d/vk_lavapipe_icd.cf.json");
