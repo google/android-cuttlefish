@@ -10,6 +10,10 @@ gcloud auth application-default login
 
 Go to Step 2 if you have already an image with the wanted kernel.
 
+`-linux-image-deb` is optional. Without it, the newest kernel available for the
+Debian release (backports included) that the NVIDIA driver builds against is
+installed.
+
 ```
 go run ./cmd/create_gce_fixed_kernel \
   -project <project> \
