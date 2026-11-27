@@ -62,7 +62,7 @@ std::vector<std::string> GenerateConfigFlags(
 Result<std::vector<std::string>> GenerateInstancesFlags(
     const EnvironmentSpecification& cfg) {
   std::vector<std::string> res = CF_EXPECT(GenerateBootFlags(cfg));
-  res = MergeResults(std::move(res), GenerateDiskFlags(cfg));
+  res = MergeResults(std::move(res), CF_EXPECT(GenerateDiskFlags(cfg)));
   res = MergeResults(std::move(res), CF_EXPECT(GenerateGraphicsFlags(cfg)));
   res = MergeResults(std::move(res), GenerateSecurityFlags(cfg));
   res = MergeResults(std::move(res), GenerateStreamingFlags(cfg));
