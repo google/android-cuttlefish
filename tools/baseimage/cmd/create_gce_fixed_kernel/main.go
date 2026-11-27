@@ -15,11 +15,14 @@
 package main
 
 import (
+	"errors"
 	"flag"
 	"fmt"
 	"log"
 	"maps"
+	"regexp"
 	"slices"
+	"strings"
 
 	"github.com/google/android-cuttlefish/tools/baseimage/pkg/cli"
 	"github.com/google/android-cuttlefish/tools/baseimage/pkg/gce"
@@ -28,6 +31,8 @@ import (
 
 // Cuttlefish base images are based on debian images.
 const debianSourceImageProject = "debian-cloud"
+
+var linuxImageDebRe = regexp.MustCompile(`^linux-image-[0-9]+\.[0-9]+\.[0-9]+[a-zA-Z0-9.+~-]*$`)
 
 var sourceImageMap = map[gce.Arch]map[int]string{
 	gce.ArchX86: {
@@ -50,44 +55,69 @@ var (
 	imageName     string
 )
 
+func registerFlags(fs *flag.FlagSet) {
+	fs.StringVar(&project, "project", "", "GCP project whose resources will be used for creating the amended image")
+	fs.StringVar(&zone, "zone", "us-central1-a", "GCP zone used for creating relevant resources")
+	fs.Var(&arch, "arch", "architecture of GCE image. Supports either x86_64 or arm64")
+	fs.IntVar(&debianVersion, "debian-version", 13, "Debian version: https://www.debian.org/releases")
+	fs.StringVar(&linuxImageDeb, "linux-image-deb", "", "linux-image-* package name. E.g. linux-image-6.1.0-40-cloud-amd64. Defaults to the newest kernel, backports included, that the NVIDIA driver builds against")
+	fs.StringVar(&imageName, "image-name", "", "output GCE image name")
+}
+
 func init() {
-	flag.StringVar(&project, "project", "", "GCP project whose resources will be used for creating the amended image")
-	flag.StringVar(&zone, "zone", "us-central1-a", "GCP zone used for creating relevant resources")
-	flag.Var(&arch, "arch", "architecture of GCE image. Supports either x86_64 or arm64")
-	flag.IntVar(&debianVersion, "debian-version", 13, "Debian version: https://www.debian.org/releases")
-	flag.StringVar(&linuxImageDeb, "linux-image-deb", "", "linux-image-* package name. E.g. linux-image-6.1.0-40-cloud-amd64")
-	flag.StringVar(&imageName, "image-name", "", "output GCE image name")
+	registerFlags(flag.CommandLine)
+}
+
+func validateFlags() error {
+	if arch.String() == "" {
+		return errors.New("usage: `-arch` must not be empty")
+	}
+	if project == "" {
+		return errors.New("usage: `-project` must not be empty")
+	}
+	if zone == "" {
+		return errors.New("usage: `-zone` must not be empty")
+	}
+	if imageName == "" {
+		return errors.New("usage: `-image-name` must not be empty")
+	}
+	if _, ok := sourceImageMap[arch.GceArch()]; !ok {
+		return fmt.Errorf("no source image found for arch %s: supported archs: %v",
+			arch, slices.Collect(maps.Keys(sourceImageMap)))
+	}
+	if _, ok := sourceImageMap[arch.GceArch()][debianVersion]; !ok {
+		return fmt.Errorf("no source image found for debian %d: supported versions: %v",
+			debianVersion, slices.Collect(maps.Keys(sourceImageMap[arch.GceArch()])))
+	}
+	if linuxImageDeb != "" {
+		if err := validateLinuxImageDeb(linuxImageDeb, arch.GceArch()); err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
+func validateLinuxImageDeb(pkg string, targetArch gce.Arch) error {
+	if !linuxImageDebRe.MatchString(pkg) {
+		return fmt.Errorf("invalid `-linux-image-deb` %q: expected a concrete kernel package like linux-image-6.12.118+deb13-cloud-amd64", pkg)
+	}
+	switch targetArch {
+	case gce.ArchX86:
+		if strings.HasSuffix(pkg, "-arm64") {
+			return fmt.Errorf("`-linux-image-deb` %q targets arm64, which conflicts with `-arch=x86_64`", pkg)
+		}
+	case gce.ArchArm:
+		if strings.HasSuffix(pkg, "-amd64") {
+			return fmt.Errorf("`-linux-image-deb` %q targets amd64, which conflicts with `-arch=arm64`", pkg)
+		}
+	}
+	return nil
 }
 
 func main() {
 	flag.Parse()
-
-	if arch.String() == "" {
-		log.Fatal("usage: `-arch` must not be empty")
-	}
-	if project == "" {
-		log.Fatal("usage: `-project` must not be empty")
-	}
-	if zone == "" {
-		log.Fatal("usage: `-zone` must not be empty")
-	}
-	if linuxImageDeb == "" {
-		log.Fatal("usage: `-linux-image-deb` must not be empty")
-	}
-	if imageName == "" {
-		log.Fatal("usage: `-image-name` must not be empty")
-	}
-
-	if _, ok := sourceImageMap[arch.GceArch()]; !ok {
-		log.Fatalf("no source image found for arch %s: supported archs: %v",
-			arch,
-			slices.Collect(maps.Keys(sourceImageMap)))
-	}
-
-	if _, ok := sourceImageMap[arch.GceArch()][debianVersion]; !ok {
-		log.Fatalf("no source image found for debian %d: supported versions: %v",
-			debianVersion,
-			slices.Collect(maps.Keys(sourceImageMap[arch.GceArch()])))
+	if err := validateFlags(); err != nil {
+		log.Fatal(err)
 	}
 
 	h, err := gce.NewGceHelper(project, zone)
@@ -116,6 +146,14 @@ func main() {
 		SourceImage:        sourceImage,
 		ImageName:          imageName,
 		ModifyFunc: func(project, zone, insName string) error {
+			if linuxImageDeb == "" {
+				if err := gce.UploadBashScript(project, zone, insName, "install_nvidia.sh", scripts.InstallNvidia); err != nil {
+					return fmt.Errorf("error uploading script: %v", err)
+				}
+				if err := gce.UploadBashScript(project, zone, insName, "select_default_kernel.sh", scripts.SelectDefaultKernel); err != nil {
+					return fmt.Errorf("error uploading script: %v", err)
+				}
+			}
 			if err := gce.UploadBashScript(project, zone, insName, "install_kernel_main.sh", scripts.InstallKernelMain); err != nil {
 				return fmt.Errorf("error uploading script: %v", err)
 			}
