@@ -284,6 +284,7 @@ class BluetoothChannelHandler : public DataChannelHandler {
 class CameraChannelHandler : public DataChannelHandler {
  public:
   Result<void> OnMessageInner(const webrtc::DataBuffer &msg) override {
+    static constexpr size_t kMaxCameraFrameBufferSize = 64 * 1024 * 1024;
     auto msg_data = msg.data.cdata<char>();
     if (msg.size() == strlen(kCameraDataEof) &&
         !strncmp(msg_data, kCameraDataEof, msg.size())) {
@@ -291,6 +292,10 @@ class CameraChannelHandler : public DataChannelHandler {
       observer()->OnCameraData(receive_buffer_);
       receive_buffer_.clear();
       return {};
+    }
+    if (msg.size() > kMaxCameraFrameBufferSize - receive_buffer_.size()) {
+      receive_buffer_.clear();
+      return CF_ERR("Camera frame buffer exceeded maximum size");
     }
     // Otherwise buffer up data
     receive_buffer_.insert(receive_buffer_.end(), msg_data,

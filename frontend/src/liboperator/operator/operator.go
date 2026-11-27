@@ -646,10 +646,6 @@ func adbProxy(w http.ResponseWriter, r *http.Request, pool *DevicePool) {
 var wsSignalingUpgrader = websocket.Upgrader{
 	ReadBufferSize:  4096,
 	WriteBufferSize: 4096,
-	CheckOrigin: func(r *http.Request) bool {
-		// Allow all origins; restrict in production via reverse proxy
-		return true
-	},
 }
 
 // WebSocket endpoint for signaling
