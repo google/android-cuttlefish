@@ -11,8 +11,26 @@ exports_files([
 # ```
 # Additionally, crosvm optimization affects VM performance more noticeably
 # than other executables involved in running Cuttlefish devices.
+alias(
+    name = "rutabaga_gfx",
+    actual = "@crosvm_bin//:rutabaga_gfx-0.1.85",
+    visibility = ["//visibility:public"],
+)
+
+build_in_opt(
+    name = "broccolini_bin_opt",
+    actual = "@crosvm_bin//:broccolini__broccolini",
+    visibility = ["//visibility:public"],
+)
+
 build_in_opt(
     name = "crosvm_bin_opt",
     actual = "@crosvm_bin//:crosvm__crosvm",
+    visibility = ["//visibility:public"],
+)
+
+build_in_opt(
+    name = "libminijailpreload.so",
+    actual = "@crosvm_bin//:minijail_sys_libminijailpreload_so",
     visibility = ["//visibility:public"],
 )

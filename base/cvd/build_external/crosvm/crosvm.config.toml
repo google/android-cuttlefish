@@ -1,6 +1,8 @@
 [patch.crates-io]
 # this needs to be at parity with MODULE.bazel
-audio_streams = { git = "https://chromium.googlesource.com/crosvm/crosvm", rev = "597fa65c644c3880e2eba24a6708ab93b3321d4a" }
-libcras = { git = "https://chromium.googlesource.com/crosvm/crosvm", rev = "597fa65c644c3880e2eba24a6708ab93b3321d4a" }
+audio_streams = { git = "https://chromium.googlesource.com/crosvm/crosvm", rev = "7644716341320502d04d9b9e96d8bed591bb0c16" }
+libcras = { git = "https://chromium.googlesource.com/crosvm/crosvm", rev = "7644716341320502d04d9b9e96d8bed591bb0c16" }
 # this needs to be at parity with the crosvm submodule third_party/minijail
 minijail = { git = "https://chromium.googlesource.com/chromiumos/platform/minijail", rev = "7845d89927a82dbdcdee6276837cd0978f69ba19" }
+# this needs to be at parity with RUTABAGA_REV in MODULE.bazel
+magma-gpu = { git = "https://github.com/magma-gpu/rutabaga_gfx.git", rev = "aefe66714318166a778920d26598ed93aa212578" }

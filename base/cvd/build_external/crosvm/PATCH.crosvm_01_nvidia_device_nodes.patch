@@ -1,0 +1,42 @@
+From 30346a9bcacd45af3a0f7d331f8551842ed3f6c6 Mon Sep 17 00:00:00 2001
+From: Jason Macnak <natsu@google.com>
+Date: Mon, 23 Nov 2026 09:58:49 -0800
+Subject: [PATCH] gpu: bind mount nvidia device nodes in render server jail
+
+Bind mount /dev/nvidiactl, /dev/nvidia-modeset, /dev/nvidia-uvm,
+/dev/nvidia-uvm-tools, and /dev/nvidia[0-3] into the gpu_render_server
+minijail when present on the host so isolated Vulkan contexts can access
+proprietary NVIDIA GPU drivers.
+
+Bug: b/577098280
+---
+ src/crosvm/sys/linux/gpu.rs | 16 ++++++++++++++++
+ 1 file changed, 16 insertions(+)
+
+diff --git a/src/crosvm/sys/linux/gpu.rs b/src/crosvm/sys/linux/gpu.rs
+index 3f983de4d..de9648d8a 100644
+--- a/src/crosvm/sys/linux/gpu.rs
++++ b/src/crosvm/sys/linux/gpu.rs
+@@ -333,6 +333,22 @@ pub fn start_gpu_render_server(
+             jail.mount_bind(log_path, log_path, true)?;
+         }
+ 
++        for nvidia_dev in [
++            "/dev/nvidiactl",
++            "/dev/nvidia-modeset",
++            "/dev/nvidia-uvm",
++            "/dev/nvidia-uvm-tools",
++            "/dev/nvidia0",
++            "/dev/nvidia1",
++            "/dev/nvidia2",
++            "/dev/nvidia3",
++        ] {
++            let dev_path = Path::new(nvidia_dev);
++            if dev_path.exists() {
++                jail.mount_bind(dev_path, dev_path, true)?;
++            }
++        }
++
+         (jail, Some(cache_info))
+     } else {
+         (Minijail::new().context("failed to create jail")?, None)

@@ -1,0 +1,98 @@
+From 44af19cec3e81ebe64819e34cd8a9d3c0359daad Mon Sep 17 00:00:00 2001
+From: Jason Macnak <natsu@google.com>
+Date: Fri, 20 Nov 2026 15:51:36 -0800
+Subject: [PATCH] gpu: add remote-context-types flag to route capsets to
+ broccolini
+
+Add remote-context-types (remote_capset_mask) to GpuParameters so
+capsets in remote-context-types are passed to broccolini
+(--context-types and --renderer-features) and routed via ZygoteChannel
+to run in isolated worker processes, while capsets in context-types
+continue to run in-process within the virtio-gpu device.
+
+Bug: b/577098280
+---
+ src/crosvm/cmdline.rs       |  3 +++
+ src/crosvm/gpu_config.rs    | 10 +++++++++-
+ src/crosvm/sys/linux/gpu.rs | 27 ++++++++++++++++++++++++++-
+ 3 files changed, 38 insertions(+), 2 deletions(-)
+
+diff --git a/src/crosvm/cmdline.rs b/src/crosvm/cmdline.rs
+index e5ba489f1..2eba87fec 100644
+--- a/src/crosvm/cmdline.rs
++++ b/src/crosvm/cmdline.rs
+@@ -1233,6 +1233,9 @@ pub struct RunCommand {
+     ///        values for GpuDisplayParameters in the section below.
+     ///     context-types=LIST - The list of supported context
+     ///       types, separated by ':' (default: no contexts enabled)
++    ///     remote-context-types=LIST - The list of supported
++    ///       context types to route to the render server,
++    ///       separated by ':' (default: no remote contexts enabled)
+     ///     width=INT - The width of the virtual display connected
+     ///        to the virtio-gpu.
+     ///        Deprecated - use `displays` instead.
+diff --git a/src/crosvm/gpu_config.rs b/src/crosvm/gpu_config.rs
+index 23f2f2fff..b14a175d7 100644
+--- a/src/crosvm/gpu_config.rs
++++ b/src/crosvm/gpu_config.rs
+@@ -328,13 +328,21 @@ mod tests {
+     #[test]
+     fn parse_gpu_options_context_types() {
+         use rutabaga_gfx::RUTABAGA_CAPSET_CROSS_DOMAIN;
++        use rutabaga_gfx::RUTABAGA_CAPSET_GFXSTREAM_VULKAN;
+         use rutabaga_gfx::RUTABAGA_CAPSET_VIRGL;
+ 
+-        let gpu_params = parse_gpu_options("context-types=virgl:cross-domain").unwrap();
++        let gpu_params = parse_gpu_options(
++            "context-types=virgl:cross-domain,remote-context-types=gfxstream-vulkan",
++        )
++        .unwrap();
+         assert_eq!(
+             gpu_params.capset_mask,
+             (1 << RUTABAGA_CAPSET_VIRGL) | (1 << RUTABAGA_CAPSET_CROSS_DOMAIN)
+         );
++        assert_eq!(
++            gpu_params.remote_capset_mask,
++            1 << RUTABAGA_CAPSET_GFXSTREAM_VULKAN
++        );
+     }
+ 
+     #[test]
+diff --git a/src/crosvm/sys/linux/gpu.rs b/src/crosvm/sys/linux/gpu.rs
+index 4f132c6b0..328574c5c 100644
+--- a/src/crosvm/sys/linux/gpu.rs
++++ b/src/crosvm/sys/linux/gpu.rs
+@@ -437,7 +437,32 @@ pub fn start_gpu_render_server(
+         .to_str()
+         .ok_or_else(|| anyhow!("invalid render server path"))?;
+     let fd_str = server_socket.as_raw_descriptor().to_string();
+-    let args = [cmd_str, "--socket-fd", &fd_str];
++    let mut args = vec![cmd_str, "--socket-fd", &fd_str];
++
++    let is_broccolini = cmd
++        .file_name()
++        .and_then(|n| n.to_str())
++        .is_some_and(|n| n.contains("broccolini"));
++    let context_types_str = if is_broccolini {
++        cfg.gpu_parameters.as_ref().and_then(|p| {
++            let names = rutabaga_gfx::calculate_capset_names(p.remote_capset_mask);
++            (!names.is_empty()).then(|| names.join(":"))
++        })
++    } else {
++        None
++    };
++    if let Some(ref context_types) = context_types_str {
++        args.extend(["--context-types", context_types.as_str()]);
++    }
++    if is_broccolini {
++        if let Some(ref features) = cfg
++            .gpu_parameters
++            .as_ref()
++            .and_then(|p| p.renderer_features.as_ref())
++        {
++            args.extend(["--renderer-features", features.as_str()]);
++        }
++    }
+ 
+     let env = Some(get_gpu_render_server_environment(
+         cache_info.as_ref(),
