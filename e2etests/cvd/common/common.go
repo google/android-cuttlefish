@@ -19,6 +19,7 @@ package e2etests
 import (
 	"bytes"
 	"context"
+	"encoding/json"
 	"encoding/xml"
 	"errors"
 	"fmt"
@@ -177,13 +178,18 @@ func (tc *TestContext) TempDir() string {
 
 // Common parameters passed to `cvd fetch`.
 type FetchArgs struct {
-	BootloaderBuildBranch string
-	BootloaderBuildTarget string
-	DefaultBuildBranch    string
-	DefaultBuildTarget    string
-	SubstituteOnly        bool
-	TestSuiteBuildBranch  string
-	TestSuiteBuildTarget  string
+	AndroidEfiLoaderBuildBranch   string
+	AndroidEfiLoaderBuildTarget   string
+	AndroidEfiLoaderBuildArtifact string
+	BootloaderBuildBranch         string
+	BootloaderBuildTarget         string
+	DefaultBuildBranch            string
+	DefaultBuildTarget            string
+	KernelBuildBranch             string
+	KernelBuildTarget             string
+	SubstituteOnly                bool
+	TestSuiteBuildBranch          string
+	TestSuiteBuildTarget          string
 }
 
 // Common parameters passed to `cvd create`.
@@ -197,17 +203,25 @@ type FetchAndCreateArgs struct {
 	Create CreateArgs
 }
 
-// Performs `cvd fetch <args>`.
-func (tc *TestContext) CVDFetch(args FetchArgs) (CommandOutput, error) {
-	log.Printf("Fetching...")
+func buildFetchCmd(bin, targetDir, credentialSource string, args FetchArgs) []string {
 	fetchCmd := []string{
-		tc.TargetBin(),
+		bin,
 		"fetch",
 		fmt.Sprintf("--default_build=%s/%s", args.DefaultBuildBranch, args.DefaultBuildTarget),
-		fmt.Sprintf("--target_directory=%s", tc.tempdir),
+		fmt.Sprintf("--target_directory=%s", targetDir),
+	}
+	if args.AndroidEfiLoaderBuildBranch != "" && args.AndroidEfiLoaderBuildTarget != "" {
+		efiBuild := fmt.Sprintf("%s/%s", args.AndroidEfiLoaderBuildBranch, args.AndroidEfiLoaderBuildTarget)
+		if args.AndroidEfiLoaderBuildArtifact != "" {
+			efiBuild = fmt.Sprintf("%s{%s}", efiBuild, args.AndroidEfiLoaderBuildArtifact)
+		}
+		fetchCmd = append(fetchCmd, fmt.Sprintf("--android_efi_loader_build=%s", efiBuild))
 	}
 	if args.BootloaderBuildBranch != "" && args.BootloaderBuildTarget != "" {
 		fetchCmd = append(fetchCmd, fmt.Sprintf("--bootloader_build=%s/%s", args.BootloaderBuildBranch, args.BootloaderBuildTarget))
+	}
+	if args.KernelBuildBranch != "" && args.KernelBuildTarget != "" {
+		fetchCmd = append(fetchCmd, fmt.Sprintf("--kernel_build=%s/%s", args.KernelBuildBranch, args.KernelBuildTarget))
 	}
 	if args.TestSuiteBuildBranch != "" && args.TestSuiteBuildTarget != "" {
 		fetchCmd = append(fetchCmd, fmt.Sprintf("--test_suites_build=%s/%s", args.TestSuiteBuildBranch, args.TestSuiteBuildTarget))
@@ -215,11 +229,55 @@ func (tc *TestContext) CVDFetch(args FetchArgs) (CommandOutput, error) {
 	if args.SubstituteOnly {
 		fetchCmd = append(fetchCmd, "--host_substitutions=only")
 	}
-
-	credentialArg := os.Getenv("CREDENTIAL_SOURCE")
-	if credentialArg != "" {
-		fetchCmd = append(fetchCmd, fmt.Sprintf("--credential_source=%s", credentialArg))
+	if credentialSource != "" {
+		fetchCmd = append(fetchCmd, fmt.Sprintf("--credential_source=%s", credentialSource))
 	}
+	return fetchCmd
+}
+
+// ParseFetcherConfigBuildID returns the build_id recorded in a fetcher_config.json
+// payload for any entry matching the given source name (case-insensitive).
+func ParseFetcherConfigBuildID(data []byte, source string) (string, error) {
+	var cfg struct {
+		CvdFiles map[string]struct {
+			Source  string `json:"source"`
+			BuildID string `json:"build_id"`
+		} `json:"cvd_files"`
+	}
+	if err := json.Unmarshal(data, &cfg); err != nil {
+		return "", fmt.Errorf("failed to parse fetcher_config.json: %w", err)
+	}
+	for _, entry := range cfg.CvdFiles {
+		if strings.EqualFold(entry.Source, source) && entry.BuildID != "" {
+			return entry.BuildID, nil
+		}
+	}
+	return "", fmt.Errorf("no build_id found in fetcher_config.json for source %q", source)
+}
+
+// FetcherConfigBuildID returns the build_id recorded in <tempdir>/fetcher_config.json
+// for the given fetch source (e.g. "bootloader_build", "kernel_build").
+func (tc *TestContext) FetcherConfigBuildID(source string) (string, error) {
+	data, err := os.ReadFile(filepath.Join(tc.tempdir, "fetcher_config.json"))
+	if err != nil {
+		return "", fmt.Errorf("failed to read fetcher_config.json: %w", err)
+	}
+	return ParseFetcherConfigBuildID(data, source)
+}
+
+// ReadLog returns the contents of a Cuttlefish log file via `cvd logs --print`.
+func (tc *TestContext) ReadLog(logName string) (string, error) {
+	res, err := tc.RunCmd(tc.TargetBin(), "logs", "--print", logName)
+	if err != nil {
+		return "", fmt.Errorf("failed to read log %q: %w", logName, err)
+	}
+	return res.Stdout, nil
+}
+
+// Performs `cvd fetch <args>`.
+func (tc *TestContext) CVDFetch(args FetchArgs) (CommandOutput, error) {
+	log.Printf("Fetching...")
+	fetchCmd := buildFetchCmd(tc.TargetBin(), tc.tempdir, os.Getenv("CREDENTIAL_SOURCE"), args)
 	res, err := tc.RunCmd(fetchCmd...)
 	if err != nil {
 		log.Printf("Failed to fetch: %w", err)
