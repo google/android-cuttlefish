@@ -55,9 +55,8 @@ Result<MetricsData> GatherFetchMetrics(
 }
 
 Result<void> RunMetrics(
-    const MetricsInput& metrics_input,
+    const MetricsInput& metrics_input, const ScopedLogger& logger,
     const std::optional<FetchInput>& fetch_input = std::nullopt) {
-  ScopedLogger logger = CreateLogger(metrics_input.metrics_directory);
   CF_EXPECTF(FileExists(metrics_input.metrics_directory),
              "Metrics directory({}) does not exist, perhaps metrics were not "
              "initialized.",
@@ -90,7 +89,9 @@ void GatherFetchStartMetrics(const FetchFlags& fetch_flags) {
     return;
   }
 
-  Result<void> run_metrics_result = RunMetrics(metrics_input, fetch_flags);
+  ScopedLogger logger = CreateLogger(metrics_input.metrics_directory);
+  Result<void> run_metrics_result =
+      RunMetrics(metrics_input, logger, fetch_flags);
   if (!run_metrics_result.has_value()) {
     VLOG(0) << fmt::format(
         "Failed during metrics gathering and (possible) outputting.  Error: {}",
@@ -102,7 +103,9 @@ void GatherFetchStartMetrics(const FetchFlags& fetch_flags) {
 void GatherFetchCompleteMetrics(const std::string& target_directory,
                                 const FetchResult& fetch_result) {
   const MetricsInput metrics_input = GetFetchMetricsInput(target_directory);
-  Result<void> run_metrics_result = RunMetrics(metrics_input, fetch_result);
+  ScopedLogger logger = CreateLogger(metrics_input.metrics_directory);
+  Result<void> run_metrics_result =
+      RunMetrics(metrics_input, logger, fetch_result);
   if (!run_metrics_result.has_value()) {
     VLOG(0) << fmt::format(
         "Failed during metrics gathering and (possible) outputting.  Error: {}",
@@ -113,7 +116,8 @@ void GatherFetchCompleteMetrics(const std::string& target_directory,
 
 void GatherFetchFailedMetrics(const std::string& target_directory) {
   const MetricsInput metrics_input = GetFetchMetricsInput(target_directory);
-  Result<void> run_metrics_result = RunMetrics(metrics_input);
+  ScopedLogger logger = CreateLogger(metrics_input.metrics_directory);
+  Result<void> run_metrics_result = RunMetrics(metrics_input, logger);
   if (!run_metrics_result.has_value()) {
     VLOG(0) << fmt::format(
         "Failed during metrics gathering and (possible) outputting.  Error: {}",

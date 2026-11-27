@@ -141,7 +141,9 @@ void PopulateCuttlefishGuest(MetricsEventV2& metrics_event,
   guest.set_event_type(ConvertDeviceEventType(guest_metrics.event_type));
   guest.set_guest_id(
       fmt::format("{}-{}", session_id, guest_metrics.instance_id));
-  guest.set_guest_os_version(guest_metrics.os_version);
+  if (!guest_metrics.os_version.empty()) {
+    guest.set_guest_os_version(guest_metrics.os_version);
+  }
 
   CuttlefishFlags& flags = *guest.mutable_flags();
   flags.set_boot_image_specified(

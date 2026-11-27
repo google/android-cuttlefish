@@ -546,14 +546,15 @@ func (tc *TestContext) TearDown() {
 			metricsdir, err := tc.GetMetricsDir()
 			if err != nil {
 				log.Printf("Failed to find v2 metrics directory: %w", err)
-			} else {
-				outmetricsdir := path.Join(testoutdir, "metrics_files")
-				err := os.MkdirAll(outmetricsdir, os.ModePerm)
-				if err == nil {
-					_, err := runCmdWithContextEnv(context.TODO(), []string{"cp", "-r", "--dereference", metricsdir, outmetricsdir}, map[string]string{})
-					if err != nil {
-						log.Printf("failed to copy %s to %s: %w", metricsdir, outmetricsdir, err)
-					}
+				log.Printf("falling back to `temp_dir/metrics`")
+				metricsdir = path.Join(tc.tempdir, "metrics")
+			} 
+			outmetricsdir := path.Join(testoutdir, "metrics_files")
+			err = os.MkdirAll(outmetricsdir, os.ModePerm)
+			if err == nil {
+				_, err := runCmdWithContextEnv(context.TODO(), []string{"cp", "-r", "--dereference", metricsdir, outmetricsdir}, map[string]string{})
+				if err != nil {
+					log.Printf("failed to copy %s to %s: %w", metricsdir, outmetricsdir, err)
 				}
 			}
 

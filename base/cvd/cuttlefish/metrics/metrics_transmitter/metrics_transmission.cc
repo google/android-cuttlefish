@@ -16,18 +16,24 @@
 
 #include "cuttlefish/metrics/metrics_transmitter/metrics_transmission.h"
 
+#include <chrono>
 #include <memory>
 #include <string>
 
 #include "cuttlefish/host/libs/web/http_client/curl_http_client.h"
 #include "cuttlefish/host/libs/web/http_client/http_client.h"
 #include "cuttlefish/host/libs/web/http_client/http_string.h"
+#include "cuttlefish/host/libs/web/http_client/retrying_http_client.h"
 #include "cuttlefish/metrics/external_proto/clientanalytics.pb.h"
 #include "cuttlefish/metrics/io/metrics_environment.h"
 #include "cuttlefish/result/result.h"
 
 namespace cuttlefish {
 namespace {
+
+constexpr int kRetryAttempts = 5;
+constexpr std::chrono::milliseconds kRetryDelay =
+    std::chrono::milliseconds(1000);
 
 std::string ClearcutEnvironmentUrl(const ClearcutEnvironment environment) {
   switch (environment) {
@@ -55,12 +61,16 @@ Result<void> PostRequest(HttpClient& http_client, const std::string& output,
 Result<void> TransmitMetricsEvent(
     const wireless_android_play_playlog::LogRequest& log_request,
     ClearcutEnvironment environment) {
-  std::unique_ptr<HttpClient> http_client =
+  std::unique_ptr<HttpClient> curl_http_client =
       CurlHttpClient(/*use_logging_debug_function=*/true);
-  CF_EXPECT(http_client.get() != nullptr,
+  std::unique_ptr<HttpClient> retrying_http_client =
+      RetryingServerErrorHttpClient(*curl_http_client, kRetryAttempts,
+                                    kRetryDelay);
+
+  CF_EXPECT(retrying_http_client.get() != nullptr,
             "Unable to create cURL client for metrics transmission");
-  CF_EXPECT(
-      PostRequest(*http_client, log_request.SerializeAsString(), environment));
+  CF_EXPECT(PostRequest(*retrying_http_client, log_request.SerializeAsString(),
+                        environment));
   return {};
 }
 
