@@ -390,6 +390,33 @@ func (testIDM) DeleteImageDirectory(imageDirName string) error {
 	return nil
 }
 
+func TestUserArtifactRequestFailsWithInvalidChecksum(t *testing.T) {
+	controller := Controller{UserArtifactsManager: &testUAM{}, OperationManager: NewMapOM()}
+	tests := []struct {
+		method string
+		path   string
+	}{
+		{method: "PUT", path: "/v1/userartifacts/wrong_checksum"},
+		{method: "GET", path: "/v1/userartifacts/wrong_checksum"},
+		{method: "POST", path: "/v1/userartifacts/wrong_checksum/:extract"},
+	}
+	for _, tc := range tests {
+		t.Run(tc.method+" "+tc.path, func(t *testing.T) {
+			req, err := http.NewRequest(tc.method, tc.path, strings.NewReader("{}"))
+			if err != nil {
+				t.Fatal(err)
+			}
+			rr := httptest.NewRecorder()
+
+			makeRequest(rr, req, &controller)
+
+			if rr.Code != http.StatusBadRequest {
+				t.Errorf("expected status %d, got %d", http.StatusBadRequest, rr.Code)
+			}
+		})
+	}
+}
+
 func TestUploadUserArtifactIsHandled(t *testing.T) {
 	body := &bytes.Buffer{}
 	writer := multipart.NewWriter(body)
@@ -401,7 +428,7 @@ func TestUploadUserArtifactIsHandled(t *testing.T) {
 	io.Copy(fw, bytes.NewReader([]byte("lorem")))
 	writer.Close()
 
-	req, _ := http.NewRequest("PUT", "/v1/userartifacts/foo", bytes.NewReader(body.Bytes()))
+	req, _ := http.NewRequest("PUT", "/v1/userartifacts/"+strings.Repeat("a", 64), bytes.NewReader(body.Bytes()))
 	req.Header.Set("Content-Type", writer.FormDataContentType())
 	controller := Controller{UserArtifactsManager: &testUAM{}}
 	rr := httptest.NewRecorder()
@@ -414,7 +441,7 @@ func TestUploadUserArtifactIsHandled(t *testing.T) {
 }
 
 func TestStatUserArtifactIsHandled(t *testing.T) {
-	req, err := http.NewRequest("GET", "/v1/userartifacts/foo", strings.NewReader("{}"))
+	req, err := http.NewRequest("GET", "/v1/userartifacts/"+strings.Repeat("a", 64), strings.NewReader("{}"))
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -430,7 +457,7 @@ func TestStatUserArtifactIsHandled(t *testing.T) {
 
 func TestExtractUserArtifactIsHandled(t *testing.T) {
 	rr := httptest.NewRecorder()
-	req, err := http.NewRequest("POST", "/v1/userartifacts/foo/:extract", strings.NewReader("{}"))
+	req, err := http.NewRequest("POST", "/v1/userartifacts/"+strings.Repeat("a", 64)+"/:extract", strings.NewReader("{}"))
 	if err != nil {
 		t.Fatal(err)
 	}

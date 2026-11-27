@@ -782,11 +782,19 @@ void AudioHandler::OnCaptureBuffer(RxBuffer buffer) {
     const auto bytes_per_request =
         samples_per_channel * bytes_per_sample * stream_desc.channels;
 
-    // Fill remaining data from previous iteration
+    // Fill remaining data from previous iteration. The leftover can be larger
+    // than this buffer when the guest posts buffers smaller than 10ms, so take
+    // at most buffer.len() bytes and keep the rest for the next buffer.
+    // Otherwise bytes_read > buffer.len() and the unsigned subtractions below
+    // underflow, writing past the end of rx_buffer.
     auto& holding_buffer = stream_descs_[stream_id].holding_buffer;
-    bytes_read = holding_buffer.size();
-    std::copy(holding_buffer.cbegin(), holding_buffer.cend(), rx_buffer);
-    holding_buffer.clear();
+    const size_t from_holding =
+        std::min<size_t>(holding_buffer.size(), buffer.len());
+    std::copy(holding_buffer.cbegin(), holding_buffer.cbegin() + from_holding,
+              rx_buffer);
+    holding_buffer.erase(holding_buffer.begin(),
+                         holding_buffer.begin() + from_holding);
+    bytes_read = from_holding;
 
     bool muted = false;
     while (buffer.len() - bytes_read >= bytes_per_request) {

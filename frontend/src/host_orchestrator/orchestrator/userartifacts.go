@@ -108,6 +108,9 @@ func (m *UserArtifactsManagerImpl) ExtractedArtifactPath(checksum string) string
 }
 
 func (m *UserArtifactsManagerImpl) UpdateArtifact(checksum string, chunk UserArtifactChunk) error {
+	if chunk.Name == "." || chunk.Name == ".." || filepath.Base(chunk.Name) != chunk.Name {
+		return operator.NewBadRequestError(fmt.Sprintf("invalid value (file_name:%q)", chunk.Name), nil)
+	}
 	if chunk.OffsetBytes < 0 {
 		return operator.NewBadRequestError(fmt.Sprintf("invalid value (chunk_offset:%d)", chunk.OffsetBytes), nil)
 	}

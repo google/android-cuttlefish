@@ -1,3 +1,12 @@
+cuttlefish-frontend (1.59.2) unstable; urgency=medium
+
+  * Avoid sizing the GetMessages result from a client provided value by @ser-io in https://github.com/google/android-cuttlefish/pull/3637
+  * webui: override transitive tmp dependency to ^0.2.7 by @adelva1984 in https://github.com/google/android-cuttlefish/pull/3661
+  * host_orchestrator: Validate user artifact file name by @0405ysj in https://github.com/google/android-cuttlefish/pull/3692
+  * host_orchestrator: Validate user artifact checksum by @0405ysj in https://github.com/google/android-cuttlefish/pull/3693
+
+ -- Ram Muthiah <rammuthiah@google.com>  Fri, 27 Nov 2026 23:47:21 +0000
+
 cuttlefish-frontend (1.59.1) unstable; urgency=medium
 
   * N/A

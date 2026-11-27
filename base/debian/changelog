@@ -1,3 +1,17 @@
+cuttlefish-common (1.59.2) unstable; urgency=medium
+
+  * baseimage: Purge unused Debian EDK2 firmware packages by @rmuthiah in https://github.com/google/android-cuttlefish/pull/3636
+  * emulated_camera: Dequeue buffers with V4L2_BUF_FLAG_ERROR when capture fails by @ser-io in https://github.com/google/android-cuttlefish/pull/3704
+  * emulated_camera: Every QBUF gets exactly one DQBUF by @ser-io in https://github.com/google/android-cuttlefish/pull/3713
+  * emulated_camera: Fence completions across stream stops by @chihchiachen in https://github.com/google/android-cuttlefish/pull/3684
+  * webrtc: keep capture holding buffer reads within the rx buffer by @melihsakarya in https://github.com/google/android-cuttlefish/pull/3601
+  * cvd_env: Fix inverted prohibited service check by @abinba in https://github.com/google/android-cuttlefish/pull/3700
+  * vsock_connection: lock write_mutex_ in WriteMessage(const std::string&) by @adelva1984 in https://github.com/google/android-cuttlefish/pull/3699
+  * assemble_cvd: support cvd_config_*.json preset fields in guest_config.proto by @rmuthiah in https://github.com/google/android-cuttlefish/pull/3731
+  * tools: baseimage: Update builder VM to Debian 13 and resolve Debian image families by @rmuthiah in https://github.com/google/android-cuttlefish/pull/3512
+
+ -- Ram Muthiah <rammuthiah@google.com>  Fri, 27 Nov 2026 23:47:21 +0000
+
 cuttlefish-common (1.59.1) unstable; urgency=medium
 
   * cvd: Guard monitor socket path length and recreate missing metrics dir by @rmuthiah in https://github.com/google/android-cuttlefish/pull/3607

@@ -30,23 +30,34 @@ pub trait CaptureSink: Send + Sync {
 
 /// A capture request submitted to the channel for processing.
 pub struct CaptureRequest {
+    pub qbuf_serial: u32,
     pub buffer_id: usize,
     pub sink: Box<dyn CaptureSink>,
 }
 
+#[derive(Debug)]
+pub enum CaptureError {
+    /// Error accessing the planes of the capture sink.
+    Sink(std::io::Error),
+    /// Errno returned by the frame generator.
+    Render(i32),
+}
+
 /// Event emitted by the capture channel when a request has been completed.
-#[derive(Debug, Clone, Copy)]
+#[derive(Debug)]
 pub struct CaptureCompletedEvent {
+    pub qbuf_serial: u32,
     pub buffer_id: usize,
     pub sequence: u32,
+    pub error: Option<CaptureError>,
 }
 
 /// Control commands sent to the capture channel worker thread.
 pub enum ChannelCmd {
     /// Start capturing at the given resolution.
     StartCapture { width: u32, height: u32 },
-    /// Stop capturing and flush pending requests.
-    StopCapture,
+    /// Stop capturing, flush pending requests and signal stopped.
+    StopCapture { stopped: Sender<()> },
     /// Enqueue a capture request into the channel's request queue.
     Queue(CaptureRequest),
     /// Update the render parameters (e.g. pattern, gain).
@@ -251,9 +262,10 @@ impl CaptureProcessor {
                 self.iteration = 0;
                 self.clock.start();
             }
-            ChannelCmd::StopCapture => {
+            ChannelCmd::StopCapture { stopped } => {
                 self.streaming = false;
                 self.pending_requests.clear();
+                let _ = stopped.send(());
             }
             ChannelCmd::Queue(req) => {
                 self.pending_requests.push_back(req);
@@ -270,30 +282,11 @@ impl CaptureProcessor {
         self.iteration += 1;
 
         if let Some(mut req) = self.pending_requests.pop_front() {
-            match req.sink.planes() {
-                Ok([sink_y, sink_u, sink_v]) => {
-                    if let Err(e) = Self::write_pattern(
-                        seq as u64,
-                        self.frame_source,
-                        &self.params,
-                        self.width,
-                        self.height,
-                        sink_y,
-                        sink_u,
-                        sink_v,
-                    ) {
-                        log::warn!("Channel {}: write_pattern failed: {:#}", self.session_id, e);
-                    }
-                }
-                Err(e) => log::warn!(
-                    "Channel {}: failed to access capture planes: {:#}",
-                    self.session_id,
-                    e
-                ),
-            }
             let _ = self.completion_tx.send(CaptureCompletedEvent {
+                qbuf_serial: req.qbuf_serial,
                 buffer_id: req.buffer_id,
                 sequence: seq,
+                error: self.render(seq as u64, req.sink.as_mut()).err(),
             });
         } else {
             log::trace!(
@@ -315,20 +308,20 @@ impl CaptureProcessor {
         Ok(())
     }
 
-    fn write_pattern(
-        iteration: u64,
-        frame_source: FrameSource,
-        params: &RenderParams,
-        width: u32,
-        height: u32,
-        sink_y: &mut dyn Write,
-        sink_u: &mut dyn Write,
-        sink_v: &mut dyn Write,
-    ) -> AnyhowResult<()> {
-        frame_source
-            .generator(params)
-            .write(iteration, params, width, height, sink_y, sink_u, sink_v)
-            .map_err(|e| anyhow::anyhow!("Pattern generator write error: errno {}", e))
+    fn render(&self, iteration: u64, sink: &mut dyn CaptureSink) -> Result<(), CaptureError> {
+        let [sink_y, sink_u, sink_v] = sink.planes().map_err(CaptureError::Sink)?;
+        self.frame_source
+            .generator(&self.params)
+            .write(
+                iteration,
+                &self.params,
+                self.width,
+                self.height,
+                sink_y,
+                sink_u,
+                sink_v,
+            )
+            .map_err(CaptureError::Render)
     }
 }
 
@@ -363,14 +356,27 @@ impl CaptureChannel {
         self.send_cmd(ChannelCmd::StartCapture { width, height })
     }
 
-    /// Stops capturing on this channel and flushes queued requests.
+    /// Stops capturing on this channel and waits for the render in progress to finish.
     pub fn stop_capture(&self) -> AnyhowResult<()> {
-        self.send_cmd(ChannelCmd::StopCapture)
+        let (stopped, stopped_rx) = std::sync::mpsc::channel();
+        self.send_cmd(ChannelCmd::StopCapture { stopped })?;
+        stopped_rx
+            .recv_timeout(Duration::from_millis(100))
+            .context("Capture channel did not stop in time")
     }
 
     /// Queues a capture request for `buffer_id` into the capture channel.
-    pub fn queue_buffer(&self, buffer_id: usize, sink: Box<dyn CaptureSink>) -> AnyhowResult<()> {
-        self.send_cmd(ChannelCmd::Queue(CaptureRequest { buffer_id, sink }))
+    pub fn queue_buffer(
+        &self,
+        qbuf_serial: u32,
+        buffer_id: usize,
+        sink: Box<dyn CaptureSink>,
+    ) -> AnyhowResult<()> {
+        self.send_cmd(ChannelCmd::Queue(CaptureRequest {
+            qbuf_serial,
+            buffer_id,
+            sink,
+        }))
     }
 
     /// Updates the render parameters (e.g. test pattern, gain).
