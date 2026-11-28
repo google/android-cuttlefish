@@ -253,6 +253,37 @@ cf_cc_test(
 )
 
 cf_cc_test(
+    name = "start_interrupt_test",
+    srcs = ["start_interrupt_test.cpp"],
+    linkstatic = True,
+    deps = [
+        "//cuttlefish/common/libs/fs:fd",
+        "//cuttlefish/common/libs/utils:files",
+        "//cuttlefish/files:file_exists",
+        "//cuttlefish/files:link_or_copy",
+        "//cuttlefish/files:recursively_remove_directory",
+        "//cuttlefish/files:write_new_file",
+        "//cuttlefish/host/commands/cvd/cli:command_request",
+        "//cuttlefish/host/commands/cvd/cli/commands:start",
+        "//cuttlefish/host/commands/cvd/cli/selector:selector_common_parser",
+        "//cuttlefish/host/commands/cvd/instances",
+        "//cuttlefish/host/commands/cvd/instances:cvd_persistent_data",
+        "//cuttlefish/host/commands/cvd/instances:instance_manager",
+        "//cuttlefish/host/commands/cvd/instances/lock",
+        "//cuttlefish/posix:readlink",
+        "//cuttlefish/posix:strerror",
+        "//cuttlefish/posix:temp_failure_retry",
+        "//cuttlefish/result",
+        "//cuttlefish/result:assert",
+        "//cuttlefish/result:result_matchers",
+        "@abseil-cpp//absl/base:log_severity",
+        "@abseil-cpp//absl/log:globals",
+        "@abseil-cpp//absl/strings",
+        "@abseil-cpp//absl/strings:string_view",
+    ],
+)
+
+cf_cc_test(
     name = "status_test",
     srcs = ["status_test.cpp"],
     deps = [

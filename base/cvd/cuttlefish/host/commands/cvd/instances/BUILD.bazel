@@ -303,6 +303,7 @@ cf_cc_library(
         "//cuttlefish/process:command",
         "//cuttlefish/process:managed_stdio",
         "//cuttlefish/process:proc_file_utils",
+        "//cuttlefish/process:subprocess_options",
         "//cuttlefish/result",
         "@abseil-cpp//absl/log",
         "@android_system_libbase//:file_logging",
