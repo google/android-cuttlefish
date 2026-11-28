@@ -16,11 +16,8 @@
 
 set -o errexit -o nounset -o pipefail
 
-if [[ $# -eq 0 ]] ; then
-  echo "usage: $0 <linux-image-deb>"
-  exit 1
-fi
-linux_image_deb=$1
+# usage: $0 [<linux-image-deb>]
+linux_image_deb=${1:-}
 
 arch=$(uname -m)
 [ "${arch}" = "x86_64" ] && arch=amd64
@@ -40,24 +37,77 @@ version=$(sudo chroot /mnt/image/ /usr/bin/dpkg -s linux-image-cloud-${arch} | g
   cut -d: -f2 | cut -d" " -f2 )
 echo "AFTER UPGRADE VERSION: ${version}"
 
-sudo chroot /mnt/image /usr/bin/apt-get install -y ${linux_image_deb}
+list_installed_packages() {
+  sudo chroot /mnt/image /usr/bin/dpkg -l \
+    | grep '^ii' \
+    | awk '{print $2}' \
+    | sort
+}
 
-# Remove old kernel packages (including the linux-image-cloud-${arch}
-# meta-package, which would otherwise cause apt to pull in the default
-# security kernel when its dependency is purged), keeping only the target kernel.
-old_kernels=$(sudo chroot /mnt/image /usr/bin/dpkg -l | grep '^ii' | awk '{print $2}' | \
-  grep '^linux-image-' | grep -v "^${linux_image_deb}$" || true)
+# Prints the candidate version apt would install for a package (or "(none)").
+apt_candidate_version() {
+  local package=$1
+  sudo chroot /mnt/image /usr/bin/apt-cache policy "${package}" \
+    | awk '$1 == "Candidate:" {print $2; exit}'
+}
+
+# Prints the apt suite providing wanted_version of package (e.g. trixie-backports).
+apt_suite_of_version() {
+  local package=$1
+  local wanted_version=$2
+  local madison
+  madison=$(sudo chroot /mnt/image /usr/bin/apt-cache madison "${package}")
+
+  local version source suite_and_component
+  while IFS='|' read -r _ version source; do
+    read -r version <<< "${version}"
+    if [[ "${version}" != "${wanted_version}" ]]; then
+      continue
+    fi
+    read -r _ suite_and_component _ <<< "${source}"
+    echo "${suite_and_component%%/*}"
+    return
+  done <<< "${madison}"
+}
+
+if [[ -z "${linux_image_deb}" ]]; then
+  linux_image_deb=$(./select_default_kernel.sh)
+  echo "DEFAULT KERNEL: ${linux_image_deb}"
+fi
+
+linux_image_version=$(apt_candidate_version "${linux_image_deb}")
+if [[ -z "${linux_image_version}" || "${linux_image_version}" == "(none)" ]]; then
+  echo "CREATE IMAGE FAILED!!!"
+  echo "Package ${linux_image_deb} is not available in any apt repository"
+  exit 1
+fi
+
+# Backports kernels depend on newer packages (e.g. linux-base) from backports.
+linux_image_suite=$(apt_suite_of_version "${linux_image_deb}" "${linux_image_version}")
+if [[ "${linux_image_suite}" == *-backports ]]; then
+  echo "TARGET RELEASE: ${linux_image_suite}"
+  sudo chroot /mnt/image /usr/bin/apt-get install -y -t "${linux_image_suite}" "${linux_image_deb}"
+else
+  sudo chroot /mnt/image /usr/bin/apt-get install -y "${linux_image_deb}"
+fi
+
+# Purge old kernels and metapackages (including linux-{base,modules}-cloud from
+# backports) so only the target kernel remains.
+old_kernel_pattern="^linux-image-|^linux-(base|modules)-cloud-${arch}$"
+old_kernels=$(list_installed_packages \
+  | grep -E "${old_kernel_pattern}" \
+  | grep --invert-match --fixed-strings --line-regexp "${linux_image_deb}" \
+  || true)
 if [ -n "${old_kernels}" ]; then
   echo "Removing old kernel packages: ${old_kernels}"
   sudo chroot /mnt/image /usr/bin/apt-get purge -y ${old_kernels}
-  # update-grub may fail in a chroot; the grub config will be rebuilt
-  # when the image boots, so this is non-fatal.
+  # update-grub may fail in a chroot; the grub config will be rebuilt on boot.
   sudo chroot /mnt/image /bin/sh -c 'command -v update-grub >/dev/null && update-grub || true'
 else
   echo "No old kernel packages to remove"
 fi
 
-version=$(sudo chroot /mnt/image/ /usr/bin/dpkg -l | grep '^ii' | awk '{print $2}' | grep '^linux-image-[0-9]' || true)
+version=$(list_installed_packages | grep '^linux-image-[0-9]' || true)
 echo "END VERSION: ${version}"
 
 if [ "${version}" != "${linux_image_deb}" ]; then
