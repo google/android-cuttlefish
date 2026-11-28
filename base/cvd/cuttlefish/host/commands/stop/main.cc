@@ -119,6 +119,12 @@ std::set<pid_t> GetCandidateProcessGroups(const std::set<std::string>& dirs) {
   }
   // The process group of stop_cvd should not be killed
   ret.erase(getpgrp());
+  // When stop_cvd runs in its own process group (e.g., launched by cvd with
+  // InGroup(true)), also spare its parent's process group so FallBackStop
+  // does not SIGKILL cvd if cvd's cwd is inside a runtime/assembly directory.
+  if (const pid_t parent_pgid = getpgid(getppid()); parent_pgid >= 0) {
+    ret.erase(parent_pgid);
+  }
   return ret;
 }
 
