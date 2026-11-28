@@ -149,6 +149,50 @@ std::vector<int16_t> Capture(AudioHandler& handler, uint32_t stream_id) {
   return samples;
 }
 
+// Sends one capture buffer of `size` bytes for `stream_id`, followed by guard
+// bytes, and checks the guard bytes were not overwritten.
+std::vector<int16_t> CaptureSized(AudioHandler& handler, uint32_t stream_id,
+                                  size_t size) {
+  constexpr uint8_t kGuard = 0xA5;
+  constexpr size_t kGuardBytes = 4 * k10MsBytes;
+  std::vector<uint8_t> shm(size + kGuardBytes, kGuard);
+  AudioStatus status = AudioStatus::NOT_SET;
+  RxBuffer buffer(virtio_snd_pcm_xfer{.stream_id = Le32(stream_id)}, shm.data(),
+                  size,
+                  [&status](AudioStatus s, uint32_t, uint32_t) { status = s; });
+  handler.OnCaptureBuffer(std::move(buffer));
+  EXPECT_EQ(status, AudioStatus::VIRTIO_SND_S_OK);
+  for (size_t i = size; i < shm.size(); ++i) {
+    EXPECT_EQ(shm[i], kGuard) << "wrote past the buffer at offset " << i;
+  }
+
+  std::vector<int16_t> samples(size / sizeof(int16_t));
+  std::memcpy(samples.data(), shm.data(), size);
+  return samples;
+}
+
+TEST(AudioHandlerCaptureTest, LeftoverLargerThanBufferStaysInBounds) {
+  std::shared_ptr<FakeAudioSource> default_source =
+      std::make_shared<FakeAudioSource>(kDefaultSample);
+  std::unique_ptr<AudioHandler> handler =
+      CreateHandler(default_source, StreamSettings(/*virtual_tuner=*/false));
+  ConfigureAndStart(*handler, kFirstCaptureStreamId);
+
+  // 15 ms: one direct 10 ms read plus 5 ms from the holding buffer, leaving
+  // 5 ms (960 bytes) behind.
+  const size_t first = k10MsBytes * 3 / 2;
+  EXPECT_EQ(CaptureSized(*handler, kFirstCaptureStreamId, first),
+            std::vector<int16_t>(first / sizeof(int16_t), kDefaultSample));
+
+  // A buffer smaller than the 960 byte leftover must be filled from the
+  // leftover only, without writing past its end.
+  const size_t small = k10MsBytes / 6;  // 320 bytes
+  for (int i = 0; i < 4; ++i) {
+    EXPECT_EQ(CaptureSized(*handler, kFirstCaptureStreamId, small),
+              std::vector<int16_t>(small / sizeof(int16_t), kDefaultSample));
+  }
+}
+
 TEST(AudioHandlerRoutingTest, TunerStreamUsesTunerSource) {
   std::shared_ptr<FakeAudioSource> default_source =
       std::make_shared<FakeAudioSource>(kDefaultSample);
