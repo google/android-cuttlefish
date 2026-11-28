@@ -1,4 +1,4 @@
-load("//cuttlefish/bazel:rules.bzl", "cf_build_test", "cf_cc_binary")
+load("//cuttlefish/bazel:rules.bzl", "cf_build_test", "cf_cc_binary", "cf_cc_test")
 
 package(
     default_visibility = ["//:android_cuttlefish"],
@@ -22,6 +22,27 @@ cf_cc_binary(
         "//cuttlefish/result",
         "@abseil-cpp//absl/log",
         "@abseil-cpp//absl/log:check",
+        "@abseil-cpp//absl/strings",
+    ],
+)
+
+cf_cc_test(
+    name = "stop_test",
+    srcs = ["stop_test.cc"],
+    data = [":cvd_internal_stop"],
+    deps = [
+        "//cuttlefish/common/libs/fs:fd",
+        "//cuttlefish/common/libs/utils:files",
+        "//cuttlefish/files:recursively_remove_directory",
+        "//cuttlefish/posix:can_access",
+        "//cuttlefish/posix:strerror",
+        "//cuttlefish/posix:temp_failure_retry",
+        "//cuttlefish/process:command",
+        "//cuttlefish/process:managed_stdio",
+        "//cuttlefish/process:subprocess_options",
+        "//cuttlefish/result",
+        "//cuttlefish/result:assert",
+        "@abseil-cpp//absl/cleanup",
         "@abseil-cpp//absl/strings",
     ],
 )
