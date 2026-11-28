@@ -64,7 +64,7 @@ int Subprocess::Wait() {
   }
   int wstatus = 0;
   auto pid = pid_.load();  // Wait will set pid_ to -1 after waiting
-  auto wait_ret = waitpid(pid, &wstatus, 0);
+  pid_t wait_ret = TEMP_FAILURE_RETRY(waitpid(pid, &wstatus, 0));
   if (wait_ret < 0) {
     auto error = errno;
     LOG(ERROR) << "Error on call to waitpid: " << strerror(error);

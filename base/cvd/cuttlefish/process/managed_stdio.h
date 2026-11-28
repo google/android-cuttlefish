@@ -24,7 +24,8 @@
 namespace cuttlefish {
 
 // Success is defined by the exit code being `0`.
-Result<std::string> RunAndCaptureStdout(Command);
+Result<std::string> RunAndCaptureStdout(
+    Command, SubprocessOptions options = SubprocessOptions());
 
 /*
  * Consumes a Command and runs it, optionally managing the stdio channels.

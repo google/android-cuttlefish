@@ -24,6 +24,7 @@
 #include <unistd.h>
 
 #include <algorithm>
+#include <atomic>
 #include <chrono>
 #include <cstdio>
 #include <cstdlib>
@@ -392,6 +393,71 @@ void ParseFlagsForMetrics(const CommandRequest& request) {
                                        /* remove_flags */ false);
 }
 
+struct LaunchInterruptController {
+  enum class Phase {
+    kStarting,
+    kMonitoring,
+    kStopping,
+    // Launch finished; suppresses late signals during listener teardown.
+    kDone,
+  };
+
+  void StopMonitor() const {
+    if (stop_write->IsOpen()) {
+      (void)stop_write->Write("", 1);  // Write NUL.
+    }
+  }
+
+  void OnSignal(int signal) {
+    switch (phase.load()) {
+      case Phase::kDone:
+        return;
+      case Phase::kMonitoring:
+      case Phase::kStopping:
+        HandlePostBootSignal();
+        return;
+      case Phase::kStarting:
+        break;
+    }
+    LOG(WARNING) << strsignal(signal) << " signal received, cleaning up";
+    if (Result<void> res = subprocess_waiter.Interrupt(); !res.has_value()) {
+      LOG(ERROR) << "Failed to stop subprocesses: " << res.error();
+      LOG(ERROR) << "Devices may still be executing in the background, "
+                    "run `cvd reset` to ensure a clean state";
+    }
+    {
+      std::lock_guard lock(group_mutex);
+      if (phase.load() == Phase::kStarting) {
+        StopMonitor();
+        group.SetAllStates(cvd::INSTANCE_STATE_CANCELLED);
+        if (Result<void> res = instance_manager.UpdateInstanceGroup(group);
+            !res.has_value()) {
+          LOG(ERROR) << "Failed to update group status: " << res.error();
+        }
+        std::abort();
+      }
+    }
+    if (phase.load() != Phase::kDone) {
+      HandlePostBootSignal();
+    }
+  }
+
+  void HandlePostBootSignal() {
+    if (phase.exchange(Phase::kStopping) != Phase::kStopping) {
+      StopMonitor();
+    } else {
+      LOG(INFO) << "Already stopping device, please wait...";
+    }
+  }
+
+  SubprocessWaiter& subprocess_waiter;
+  InstanceManager& instance_manager;
+  LocalInstanceGroup& group;
+  std::mutex& group_mutex;
+  SharedFD stop_write;
+  std::atomic<Phase> phase = Phase::kStarting;
+};
+
 }  // namespace
 
 CvdStartCommandHandler::CvdStartCommandHandler(
@@ -487,48 +553,22 @@ Result<void> CvdStartCommandHandler::Handle(const CommandRequest& request) {
     memfd = CF_EXPECT(Fd::MemfdCreate("cvd_internal_start_output"));
     CF_EXPECT(SharedFD::Pipe(&stop_read, &stop_write), stop_read->StrError());
   }
-  auto stop_monitor = [stop_write]() {
-    if (stop_write->IsOpen()) {
-      (void)stop_write->Write("", 1);  // Write NUL.
-    }
-  };
 
   Command command = CF_EXPECT(ConstructCvdNonHelpCommand(
       bin, group, subcmd_args, envs, request, memfd));
 
   std::mutex group_mutex;
-  Result<std::unique_ptr<InterruptListenerHandle>> handle_res =
-      PushInterruptListener([this, &group, &group_mutex,
-                             stop_monitor](int signal) {
-        LOG(WARNING) << strsignal(signal) << " signal received, cleanning up";
-        stop_monitor();
-        Result<void> interrupt_res = subprocess_waiter_.Interrupt();
-        if (!interrupt_res.has_value()) {
-          LOG(ERROR) << "Failed to stop subprocesses: "
-                     << interrupt_res.error();
-          LOG(ERROR) << "Devices may still be executing in the background, "
-                        "run `cvd reset` to ensure a clean state";
-        }
-
-        {
-          std::lock_guard lock(group_mutex);
-          group.SetAllStates(cvd::INSTANCE_STATE_CANCELLED);
-          Result<void> update_res =
-              instance_manager_.UpdateInstanceGroup(group);
-          if (!update_res.has_value()) {
-            LOG(ERROR) << "Failed to update group status: "
-                       << update_res.error();
-          }
-        }
-        // It's technically possible for the group's state to be set to
-        // "running" before abort has a chance to run, but that can only
-        // happen if the instances are indeed running, so it's OK.
-
-        std::abort();
-      });
-
+  LaunchInterruptController interrupt_controller{
+      .subprocess_waiter = subprocess_waiter_,
+      .instance_manager = instance_manager_,
+      .group = group,
+      .group_mutex = group_mutex,
+      .stop_write = stop_write,
+  };
   std::unique_ptr<InterruptListenerHandle> listener_handle =
-      CF_EXPECT(std::move(handle_res));
+      CF_EXPECT(PushInterruptListener([&interrupt_controller](int signal) {
+        interrupt_controller.OnSignal(signal);
+      }));
   {
     std::lock_guard lock(group_mutex);
     group.SetAllStates(cvd::INSTANCE_STATE_STARTING);
@@ -571,8 +611,13 @@ Result<void> CvdStartCommandHandler::Handle(const CommandRequest& request) {
       std::move(command), group, group_mutex, envs, request);
 
   if (!launch_res.has_value()) {
+    {
+      std::lock_guard lock(group_mutex);
+      interrupt_controller.phase.store(LaunchInterruptController::Phase::kDone);
+    }
+    listener_handle.reset();
     if (!own_flags_.daemon) {
-      stop_monitor();
+      interrupt_controller.StopMonitor();
       wait_for_monitor();
       memfd->LSeek(0, SEEK_SET);
       std::cout << ReadToString(*memfd).value_or("") << std::flush;
@@ -582,18 +627,23 @@ Result<void> CvdStartCommandHandler::Handle(const CommandRequest& request) {
 
   {
     std::lock_guard lock(group_mutex);
+    interrupt_controller.phase.store(
+        own_flags_.daemon ? LaunchInterruptController::Phase::kDone
+                          : LaunchInterruptController::Phase::kMonitoring);
     group.SetAllStates(cvd::INSTANCE_STATE_RUNNING);
     CF_EXPECT(instance_manager_.UpdateInstanceGroup(group));
   }
   in_progress_lock.reset();
 
-  if (!own_flags_.daemon) {
+  if (own_flags_.daemon) {
     listener_handle.reset();
-    std::unique_ptr<InterruptListenerHandle> stop_listener = CF_EXPECT(
-        PushInterruptListener([stop_monitor](int) { stop_monitor(); }));
+  }
+  GatherVmBootCompleteMetrics(group);
 
+  if (!own_flags_.daemon) {
     wait_for_monitor();
-    stop_listener.reset();
+    interrupt_controller.phase.store(
+        LaunchInterruptController::Phase::kStopping);
 
     LOG(INFO) << "Stopping device...";
     CF_EXPECT(instance_manager_.StopInstanceGroup(
@@ -601,8 +651,6 @@ Result<void> CvdStartCommandHandler::Handle(const CommandRequest& request) {
     LOG(INFO) << "Device stopped.";
     return monitor_res;
   }
-
-  listener_handle.reset();
 
   if (own_flags_.print_group_format == "json") {
     auto group_json = CF_EXPECT(group.FetchStatus());
@@ -670,7 +718,6 @@ Result<void> CvdStartCommandHandler::LaunchDevice(
     }
   }
   CF_EXPECT(CheckProcessExitedNormally(infop));
-  GatherVmBootCompleteMetrics(group);
   return {};
 }
 
@@ -763,6 +810,7 @@ Result<void> CvdStartCommandHandler::LaunchSingleInstance(
   set_instance_state(cvd::INSTANCE_STATE_RUNNING);
   CF_EXPECT(instance_manager_.UpdateInstanceGroup(group));
   in_progress_lock.reset();
+  GatherVmBootCompleteMetrics(group);
 
   const Json::Value group_json = CF_EXPECT(group.FetchStatus());
   std::cout << group_json.toStyledString();

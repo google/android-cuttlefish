@@ -126,6 +126,17 @@ cf_cc_library(
     ],
 )
 
+cf_cc_test(
+    name = "subprocess_test",
+    srcs = ["subprocess_test.cc"],
+    deps = [
+        ":subprocess",
+        "//cuttlefish/common/libs/fs:fd",
+        "//cuttlefish/result:assert",
+        "@abseil-cpp//absl/cleanup",
+    ],
+)
+
 cf_cc_library(
     name = "subprocess_options",
     srcs = ["subprocess_options.cc"],

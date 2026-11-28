@@ -144,12 +144,14 @@ int RunWithManagedStdio(Command cmd_tmp, const std::string* stdin_str,
   return code;
 }
 
-Result<std::string> RunAndCaptureStdout(Command command) {
+Result<std::string> RunAndCaptureStdout(Command command,
+                                        SubprocessOptions options) {
   std::string standard_out;
   std::string standard_err;
   std::string command_str = command.GetShortName();
-  int exit_code = RunWithManagedStdio(std::move(command), nullptr,
-                                      &standard_out, &standard_err);
+  int exit_code =
+      RunWithManagedStdio(std::move(command), nullptr, &standard_out,
+                          &standard_err, std::move(options));
   VLOG(0) << "Ran " << command_str << " with stdout:\n" << standard_out;
   VLOG(0) << "Ran " << command_str << " with stderr:\n" << standard_err;
   CF_EXPECTF(exit_code == 0,

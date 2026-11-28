@@ -38,6 +38,7 @@
 #include "cuttlefish/process/command.h"
 #include "cuttlefish/process/managed_stdio.h"
 #include "cuttlefish/process/proc_file_utils.h"
+#include "cuttlefish/process/subprocess_options.h"
 #include "cuttlefish/result/result.h"
 
 namespace cuttlefish {
@@ -229,8 +230,9 @@ Result<void> RunStopCvd(StopCvdParams params) {
                                   fmt::join(params.instance_nums, ",")));
   }
 
+  const SubprocessOptions options = SubprocessOptions().InGroup(true);
   Result<std::string> cmd_res = RunAndCaptureStdout(
-      CreateStopCvdCommand(params.bin_path, stop_cvd_envs, args));
+      CreateStopCvdCommand(params.bin_path, stop_cvd_envs, args), options);
   if (cmd_res.has_value()) {
     return {};
   }
@@ -246,7 +248,8 @@ Result<void> RunStopCvd(StopCvdParams params) {
   LOG(ERROR) << "Trying again without it";
 
   CF_EXPECT(RunAndCaptureStdout(
-      CreateStopCvdCommand(params.bin_path, stop_cvd_envs, {wait_flag})));
+      CreateStopCvdCommand(params.bin_path, stop_cvd_envs, {wait_flag}),
+      options));
   return {};
 }
 }  // namespace cuttlefish
