@@ -36,6 +36,7 @@
 #include "absl/strings/string_view.h"
 
 #include "cuttlefish/common/libs/utils/files.h"
+#include "cuttlefish/common/libs/utils/host_info.h"
 #include "cuttlefish/common/libs/utils/size_utils.h"
 #include "cuttlefish/files/file_exists.h"
 #include "cuttlefish/host/commands/assemble_cvd/bootconfig_args.h"
@@ -107,6 +108,14 @@ size_t WriteEnvironment(const CuttlefishConfig::InstanceSpecific& instance,
   std::ostringstream env;
 
   env << "ethprime=" << kUbootPrimaryEth << '\0';
+  if (instance.target_arch() == Arch::Arm) {
+    // On 32-bit ARM (CONFIG_VMSPLIT_3G=y), kernel LowMem spans ~760 MB above
+    // the 0x40000000 physical RAM base (0x40000000..0x6f7fffff). Constrain
+    // U-Boot's ramdisk and DTB relocation below 0x6f000000 so early boot code
+    // can access them via __va() before HighMem mappings are initialized.
+    env << "initrd_high=0x6effffff" << '\0';
+    env << "fdt_high=0x6effffff" << '\0';
+  }
   if (!kernel_args.empty()) {
     env << "uenvcmd=setenv bootargs \"$cbootargs " << kernel_args << "\" && ";
   } else {
