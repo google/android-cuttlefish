@@ -110,16 +110,17 @@ func (h *GceHelper) DetachDisk(ins, disk string) error {
 
 func (h *GceHelper) CreateInstance(name string, arch Arch) (*compute.Instance, error) {
 	var machineTypes []string
-	var sourceImage string
 	switch arch {
 	case ArchX86:
 		machineTypes = []string{"n1-standard-16"}
-		sourceImage = "debian-12-bookworm-v20250415"
 	case ArchArm:
 		machineTypes = []string{"t2a-standard-16", "c4a-standard-16"}
-		sourceImage = "debian-12-bookworm-arm64-v20250415"
 	default:
 		return nil, errors.New("unsupported arch")
+	}
+	sourceImageFamily, err := DebianImageFamily(13, arch)
+	if err != nil {
+		return nil, err
 	}
 
 	payload := &compute.Instance{
@@ -128,7 +129,7 @@ func (h *GceHelper) CreateInstance(name string, arch Arch) (*compute.Instance, e
 		Disks: []*compute.AttachedDisk{
 			{
 				InitializeParams: &compute.AttachedDiskInitializeParams{
-					SourceImage: fmt.Sprintf("projects/debian-cloud/global/images/%s", sourceImage),
+					SourceImage: fmt.Sprintf("projects/debian-cloud/global/images/family/%s", sourceImageFamily),
 				},
 				Boot:       true,
 				AutoDelete: true,
@@ -246,6 +247,26 @@ func (h *GceHelper) CreateImage(ins, disk, name string) error {
 		return err
 	}
 	return h.waitForGlobalOperation(op)
+}
+
+func (h *GceHelper) ImageFromFamily(project, family string) (*compute.Image, error) {
+	return h.Service.Images.GetFromFamily(project, family).Do()
+}
+
+// DebianImageFamily returns the GCE debian-cloud image family name for a
+// Debian major version and architecture (e.g. "debian-13", "debian-13-arm64").
+func DebianImageFamily(version int, arch Arch) (string, error) {
+	if version <= 0 {
+		return "", fmt.Errorf("invalid Debian version: %d", version)
+	}
+	switch arch {
+	case ArchX86:
+		return fmt.Sprintf("debian-%d", version), nil
+	case ArchArm:
+		return fmt.Sprintf("debian-%d-arm64", version), nil
+	default:
+		return "", fmt.Errorf("unsupported arch: %v", arch)
+	}
 }
 
 func (h *GceHelper) ImageExists(project, name string) (bool, error) {
